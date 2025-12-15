@@ -1,4 +1,4 @@
-import { Settings, CheckCircle2, Trophy, Award, Upload, Star, Camera, History } from 'lucide-react';
+import { Settings, CheckCircle2, Trophy, Award, Upload, Star, Camera, History, Edit2, X } from 'lucide-react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
@@ -23,6 +23,7 @@ interface ProfileScreenProps {
     rating: number;
     gamesPlayed: number;
     teamName: string | null;
+    skillLevel?: 'Casual' | 'Novice' | 'Elite';
   };
 }
 
@@ -33,10 +34,15 @@ const badges = [
   { id: 4, name: '50 Games', icon: '🔥', earned: false },
 ];
 
+const skillLevelOptions: ('Casual' | 'Novice' | 'Elite')[] = ['Casual', 'Novice', 'Elite'];
+
 export function ProfileScreen({ onSettings, onViewAchievements, onViewHistory, onVerify, userData }: ProfileScreenProps) {
   const [showVerificationDialog, setShowVerificationDialog] = useState(false);
   const [showProfilePictureDialog, setShowProfilePictureDialog] = useState(false);
+  const [showEditSkillDialog, setShowEditSkillDialog] = useState(false);
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
+  const [userSkillLevel, setUserSkillLevel] = useState<'Casual' | 'Novice' | 'Elite'>(userData?.skillLevel || 'Novice');
+  const [selectedSkillLevel, setSelectedSkillLevel] = useState<'Casual' | 'Novice' | 'Elite'>(userSkillLevel);
   
   const defaultUserData = {
     name: 'John Doe',
@@ -48,6 +54,7 @@ export function ProfileScreen({ onSettings, onViewAchievements, onViewHistory, o
     rating: 4.7,
     gamesPlayed: 24,
     teamName: 'Thunder Squad',
+    skillLevel: 'Novice' as const,
   };
 
   const user = userData || defaultUserData;
@@ -60,6 +67,38 @@ export function ProfileScreen({ onSettings, onViewAchievements, onViewHistory, o
   const handleVerifyAccount = () => {
     onVerify?.();
     setShowVerificationDialog(false);
+  };
+
+  const handleSaveSkillLevel = () => {
+    setUserSkillLevel(selectedSkillLevel);
+    toast.success(`Skill level updated to ${selectedSkillLevel}!`);
+    setShowEditSkillDialog(false);
+  };
+
+  const getSkillBadgeColor = (skill: string) => {
+    switch (skill) {
+      case 'Casual':
+        return 'bg-blue-100 text-blue-700';
+      case 'Novice':
+        return 'bg-purple-100 text-purple-700';
+      case 'Elite':
+        return 'bg-yellow-100 text-yellow-700';
+      default:
+        return 'bg-gray-100 text-gray-700';
+    }
+  };
+
+  const getSkillDescription = (skill: string) => {
+    switch (skill) {
+      case 'Casual':
+        return 'Beginner level - New to the sport';
+      case 'Novice':
+        return 'Intermediate level - Some experience';
+      case 'Elite':
+        return 'Advanced level - Expert player';
+      default:
+        return '';
+    }
   };
 
   return (
@@ -153,8 +192,28 @@ export function ProfileScreen({ onSettings, onViewAchievements, onViewHistory, o
 
         <div className="bg-white rounded-2xl shadow-lg shadow-gray-200/50 p-4">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-gray-900">Skill & Info</h3>
-            <Badge className="bg-blue-100 text-blue-700">Novice</Badge>
+            <h3 className="text-gray-900">Skill Level</h3>
+            <div className="flex items-center gap-2">
+              <Badge className={`${getSkillBadgeColor(userSkillLevel)}`}>
+                {userSkillLevel}
+              </Badge>
+              <button
+                onClick={() => {
+                  setSelectedSkillLevel(userSkillLevel);
+                  setShowEditSkillDialog(true);
+                }}
+                className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <Edit2 className="w-4 h-4 text-blue-600" />
+              </button>
+            </div>
+          </div>
+          <p className="text-xs text-gray-500">{getSkillDescription(userSkillLevel)}</p>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-lg shadow-gray-200/50 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-gray-900">More Info</h3>
           </div>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
@@ -242,6 +301,62 @@ export function ProfileScreen({ onSettings, onViewAchievements, onViewHistory, o
           </div>
         )}
       </div>
+
+      {/* Edit Skill Level Dialog */}
+      <Dialog open={showEditSkillDialog} onOpenChange={setShowEditSkillDialog}>
+        <DialogContent className="max-w-[90%] rounded-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Skill Level</DialogTitle>
+            <DialogDescription>
+              Choose your current skill level in sports
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-4">
+            <div className="space-y-3">
+              {skillLevelOptions.map((skill) => (
+                <button
+                  key={skill}
+                  onClick={() => setSelectedSkillLevel(skill)}
+                  className={`w-full p-4 rounded-2xl border-2 transition-all ${
+                    selectedSkillLevel === skill
+                      ? `${getSkillBadgeColor(skill)} border-current shadow-md`
+                      : 'border-gray-200 bg-white hover:border-gray-300'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="text-left">
+                      <p className="font-semibold">{skill}</p>
+                      <p className="text-sm text-gray-600">{getSkillDescription(skill)}</p>
+                    </div>
+                    {selectedSkillLevel === skill && (
+                      <div className="w-5 h-5 rounded-full bg-current flex items-center justify-center">
+                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-3 pt-4">
+              <Button
+                onClick={() => setShowEditSkillDialog(false)}
+                variant="outline"
+                className="flex-1 rounded-2xl"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSaveSkillLevel}
+                className="flex-1 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white"
+              >
+                Save
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={showVerificationDialog} onOpenChange={setShowVerificationDialog}>
         <DialogContent className="max-w-[90%] rounded-2xl">
