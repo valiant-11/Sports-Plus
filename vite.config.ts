@@ -53,11 +53,6 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: false,
     minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: process.env.NODE_ENV === 'production',
-      },
-    },
     rollupOptions: {
       output: {
         manualChunks: {
