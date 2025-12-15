@@ -35,7 +35,7 @@ interface Player {
   isCurrentUser: boolean;
 }
 
-type GameState = 'queue' | 'voting' | 'results';
+type GameState = 'queue' | 'countdown' | 'voting' | 'results';
 
 export function QueueScreen({ onBack, onLeaveGame, onFinishGame, gameData, isHost = false }: QueueScreenProps) {
   const [selectedPlayer, setSelectedPlayer] = useState<any>(null);
@@ -45,7 +45,8 @@ export function QueueScreen({ onBack, onLeaveGame, onFinishGame, gameData, isHos
   const [teamAScore, setTeamAScore] = useState(0);
   const [teamBScore, setTeamBScore] = useState(0);
   const [pointsEarned, setPointsEarned] = useState(0);
-  const [votingComplete, setVotingComplete] = useState(false);
+  const [countdownSeconds, setCountdownSeconds] = useState(5);
+  const [allPlayersReady, setAllPlayersReady] = useState(false);
 
   // Initialize players when component mounts
   useEffect(() => {
@@ -53,6 +54,32 @@ export function QueueScreen({ onBack, onLeaveGame, onFinishGame, gameData, isHos
       initializePlayers();
     }
   }, [gameData?.maxPlayers]);
+
+  // Auto-start game countdown when all players are ready
+  useEffect(() => {
+    if (allPlayersReady && gameState === 'queue') {
+      setGameState('countdown');
+      toast.success('All players ready! Starting game...');
+    }
+  }, [allPlayersReady, gameState]);
+
+  // Countdown timer
+  useEffect(() => {
+    if (gameState === 'countdown') {
+      if (countdownSeconds <= 0) {
+        // Game starts - move to voting
+        setGameState('voting');
+        toast.success('Game started! Time to vote scores.');
+        return;
+      }
+
+      const timer = setTimeout(() => {
+        setCountdownSeconds(countdownSeconds - 1);
+      }, 1000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [countdownSeconds, gameState]);
 
   const initializePlayers = () => {
     if (!gameData) return;
@@ -96,12 +123,12 @@ export function QueueScreen({ onBack, onLeaveGame, onFinishGame, gameData, isHos
   // Handle ready/start button click
   const handleActionClick = () => {
     if (isHost) {
-      // Host clicks "Start Now"
+      // Host clicks "Start Now" - immediate game start
       if (!currentUserReady) {
         setCurrentUserReady(true);
         toast.success('Starting game...');
         
-        // Simulate game progression
+        // Immediate transition for host
         setTimeout(() => {
           setGameState('voting');
           toast.success('Game finished! Time to vote scores.');
@@ -114,14 +141,32 @@ export function QueueScreen({ onBack, onLeaveGame, onFinishGame, gameData, isHos
         setPlayers(prev => prev.map(p => 
           p.isCurrentUser ? { ...p, isReady: true } : p
         ));
-        toast.success('You are ready!');
+        toast.success('You are ready! Waiting for others...');
+        
+        // Check if all players are ready
+        const updatedPlayers = players.map(p => 
+          p.isCurrentUser ? { ...p, isReady: true } : p
+        );
+        checkIfAllReady(updatedPlayers);
       } else {
+        // Un-ready
         setCurrentUserReady(false);
         setPlayers(prev => prev.map(p => 
           p.isCurrentUser ? { ...p, isReady: false } : p
         ));
+        setAllPlayersReady(false);
         toast.info('You are no longer ready');
       }
+    }
+  };
+
+  // Check if all players are ready
+  const checkIfAllReady = (playersList: Player[]) => {
+    const totalPlayers = playersList.length;
+    const readyCount = playersList.filter(p => p.isReady).length;
+    
+    if (readyCount === totalPlayers) {
+      setAllPlayersReady(true);
     }
   };
 
@@ -142,7 +187,6 @@ export function QueueScreen({ onBack, onLeaveGame, onFinishGame, gameData, isHos
   const handleScoresSubmitted = (teamAFinalScore: number, teamBFinalScore: number) => {
     setTeamAScore(teamAFinalScore);
     setTeamBScore(teamBFinalScore);
-    setVotingComplete(true);
     
     // Calculate points earned
     const earned = Math.floor(Math.random() * 50) + 50; // 50-100 points
@@ -161,6 +205,7 @@ export function QueueScreen({ onBack, onLeaveGame, onFinishGame, gameData, isHos
   const teamAPlayers = players.filter(p => p.team === 1);
   const teamBPlayers = players.filter(p => p.team === 2);
   const currentUserTeam = players.find(p => p.isCurrentUser)?.team || 1;
+  const readyPlayersCount = players.filter(p => p.isReady).length;
 
   // If no game data provided, show empty state
   if (!gameData) {
@@ -281,6 +326,21 @@ export function QueueScreen({ onBack, onLeaveGame, onFinishGame, gameData, isHos
     );
   }
 
+  // COUNTDOWN STATE - Show countdown timer
+  if (gameState === 'countdown') {
+    return (
+      <div className="h-screen w-full max-w-md mx-auto bg-gray-50 flex flex-col items-center justify-center">
+        <div className="text-center space-y-6">
+          <h2 className="text-2xl font-bold text-gray-900">Game Starting In</h2>
+          <div className="text-8xl font-bold bg-gradient-to-br from-blue-600 to-green-600 bg-clip-text text-transparent animate-pulse">
+            {countdownSeconds}
+          </div>
+          <p className="text-gray-600">Get ready!</p>
+        </div>
+      </div>
+    );
+  }
+
   // QUEUE STATE - Main queue screen
   return (
     <div className="h-screen w-full max-w-md mx-auto bg-gray-50 flex flex-col pb-24">
@@ -343,6 +403,18 @@ export function QueueScreen({ onBack, onLeaveGame, onFinishGame, gameData, isHos
                 {currentUserReady ? '✓ Ready' : 'Not Ready'}
               </Badge>
             </div>
+
+            {/* Ready Status Info for Players */}
+            {!isHost && (
+              <div className="bg-blue-50 rounded-xl p-3 text-sm">
+                <p className="text-gray-700">
+                  <span className="font-semibold">{readyPlayersCount}/{players.length}</span> players ready
+                </p>
+                {allPlayersReady && (
+                  <p className="text-green-600 font-semibold mt-1">All players ready! Game starting...</p>
+                )}
+              </div>
+            )}
 
             <div className="flex items-center justify-between bg-blue-50 rounded-xl p-3">
               <div>
@@ -418,6 +490,9 @@ export function QueueScreen({ onBack, onLeaveGame, onFinishGame, gameData, isHos
                   {player.isCurrentUser && (
                     <Badge className="bg-blue-600 text-white text-xs flex-shrink-0">You</Badge>
                   )}
+                  {player.isReady && (
+                    <Badge className="bg-green-600 text-white text-xs flex-shrink-0">✓ Ready</Badge>
+                  )}
                 </button>
               ))}
             </div>
@@ -466,6 +541,9 @@ export function QueueScreen({ onBack, onLeaveGame, onFinishGame, gameData, isHos
                   </div>
                   {player.isCurrentUser && (
                     <Badge className="bg-blue-600 text-white text-xs flex-shrink-0">You</Badge>
+                  )}
+                  {player.isReady && (
+                    <Badge className="bg-green-600 text-white text-xs flex-shrink-0">✓ Ready</Badge>
                   )}
                 </button>
               ))}
