@@ -1,11 +1,10 @@
-import { toast } from 'sonner@2.0.3';
 import { useState, useEffect } from 'react';
-import { ArrowLeft, MapPin, Calendar, Users, Clock, CheckCircle2, Shield, RotateCcw, Award } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, Users, CheckCircle2, Zap } from 'lucide-react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { ScrollArea } from './ui/scroll-area';
 import { Avatar, AvatarFallback } from './ui/avatar';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog';
+import { toast } from 'sonner';
 import { MiniProfileCard } from './MiniProfileCard';
 
 interface QueueScreenProps {
@@ -29,63 +28,21 @@ interface Player {
   name: string;
   verified: boolean;
   team: 1 | 2;
-  isReady: boolean;
-  isHost: boolean;
   isCurrentUser: boolean;
 }
 
-type GameState = 'queue' | 'countdown' | 'scoring' | 'voting' | 'results';
-
-export function QueueScreen({ onBack, onLeaveGame, onFinishGame, gameData, isHost = false }: QueueScreenProps) {
+export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: QueueScreenProps) {
   const [selectedPlayer, setSelectedPlayer] = useState<any>(null);
   const [players, setPlayers] = useState<Player[]>([]);
-  const [currentUserReady, setCurrentUserReady] = useState(false);
-  const [gameState, setGameState] = useState<GameState>('queue');
-  const [teamAScore, setTeamAScore] = useState(0);
-  const [teamBScore, setTeamBScore] = useState(0);
-  const [pointsEarned, setPointsEarned] = useState(0);
-  const [countdownSeconds, setCountdownSeconds] = useState(5);
-  const [allPlayersReady, setAllPlayersReady] = useState(false);
-  const [hostScore, setHostScore] = useState({ teamA: 0, teamB: 0 });
-  const [playerVoted, setPlayerVoted] = useState(false);
+  const [userReady, setUserReady] = useState(false);
+  const [userTeam, setUserTeam] = useState<1 | 2>(1);
+  const [readyCount, setReadyCount] = useState(0);
 
-  // Initialize players when component mounts
   useEffect(() => {
     if (gameData) {
       initializePlayers();
     }
   }, [gameData?.maxPlayers]);
-
-  // Auto-start game countdown when all players are ready
-  useEffect(() => {
-    if (allPlayersReady && gameState === 'queue') {
-      setGameState('countdown');
-      toast.success('All players ready! Starting game...');
-    }
-  }, [allPlayersReady, gameState]);
-
-  // Countdown timer
-  useEffect(() => {
-    if (gameState === 'countdown') {
-      if (countdownSeconds <= 0) {
-        // Game starts
-        if (isHost) {
-          setGameState('scoring'); // Host enters score
-          toast.success('Game finished! Enter the final score.');
-        } else {
-          setGameState('voting'); // Players wait for host score
-          toast.success('Game finished! Waiting for host to enter score...');
-        }
-        return;
-      }
-
-      const timer = setTimeout(() => {
-        setCountdownSeconds(countdownSeconds - 1);
-      }, 1000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [countdownSeconds, gameState, isHost]);
 
   const initializePlayers = () => {
     if (!gameData) return;
@@ -103,8 +60,6 @@ export function QueueScreen({ onBack, onLeaveGame, onFinishGame, gameData, isHos
       name: 'You',
       verified: true,
       team: 1,
-      isReady: false,
-      isHost: isHost,
       isCurrentUser: true,
     });
 
@@ -115,8 +70,6 @@ export function QueueScreen({ onBack, onLeaveGame, onFinishGame, gameData, isHos
         name: aiPlayerNames[i - 1] || `Player ${i}`,
         verified: Math.random() > 0.3,
         team: team,
-        isReady: false,
-        isHost: i === 1 && !isHost,
         isCurrentUser: false,
       });
     }
@@ -124,111 +77,38 @@ export function QueueScreen({ onBack, onLeaveGame, onFinishGame, gameData, isHos
     setPlayers(newPlayers);
   };
 
-  // Handle ready/start button click
-  const handleActionClick = () => {
-    if (isHost) {
-      // Host clicks "Start Now"
-      if (!currentUserReady) {
-        setCurrentUserReady(true);
-        toast.success('Starting game...');
-        
-        setTimeout(() => {
-          setGameState('scoring');
-          toast.success('Game finished! Enter the final score.');
-        }, 2000);
-      }
+  const handleReady = () => {
+    setUserReady(!userReady);
+    if (!userReady) {
+      toast.success('You are ready! Waiting for others...');
+      setReadyCount(prev => prev + 1);
     } else {
-      // Player clicks "I'm Ready!"
-      if (!currentUserReady) {
-        setCurrentUserReady(true);
-        setPlayers(prev => prev.map(p => 
-          p.isCurrentUser ? { ...p, isReady: true } : p
-        ));
-        toast.success('You are ready! Waiting for others...');
-        
-        const updatedPlayers = players.map(p => 
-          p.isCurrentUser ? { ...p, isReady: true } : p
-        );
-        checkIfAllReady(updatedPlayers);
-      } else {
-        setCurrentUserReady(false);
-        setPlayers(prev => prev.map(p => 
-          p.isCurrentUser ? { ...p, isReady: false } : p
-        ));
-        setAllPlayersReady(false);
-        toast.info('You are no longer ready');
-      }
-    }
-  };
-
-  const checkIfAllReady = (playersList: Player[]) => {
-    const totalPlayers = playersList.length;
-    const readyCount = playersList.filter(p => p.isReady).length;
-    
-    if (readyCount === totalPlayers) {
-      setAllPlayersReady(true);
+      toast.info('You are no longer ready');
+      setReadyCount(prev => Math.max(0, prev - 1));
     }
   };
 
   const handleSwitchTeam = () => {
-    if (currentUserReady) {
+    if (userReady) {
       toast.error('Cannot switch teams after readying up');
       return;
     }
-
-    setPlayers(prev => prev.map(p => 
-      p.isCurrentUser ? { ...p, team: p.team === 1 ? 2 : 1 } : p
-    ));
-    const currentTeam = players.find(p => p.isCurrentUser)?.team || 1;
-    toast.success(`Switched to Team ${currentTeam === 1 ? 2 : 1}`);
+    setUserTeam(userTeam === 1 ? 2 : 1);
+    toast.success(`Switched to Team ${userTeam === 1 ? 2 : 1}`);
   };
 
-  // Host enters score
-  const handleHostSubmitScore = () => {
-    if (hostScore.teamA === 0 && hostScore.teamB === 0) {
-      toast.error('Please enter the scores');
-      return;
-    }
-
-    setTeamAScore(hostScore.teamA);
-    setTeamBScore(hostScore.teamB);
-    setGameState('voting');
-    toast.success('Score submitted! Players are voting...');
-  };
-
-  // Player votes on score
-  const handlePlayerVoteScore = () => {
-    if (playerVoted) {
-      toast.error('You already voted');
-      return;
-    }
-
-    setPlayerVoted(true);
-    toast.success('Vote submitted!');
-
-    // Check if all players have voted (simulated - assume instant)
-    setTimeout(() => {
-      const earned = Math.floor(Math.random() * 50) + 50;
-      setPointsEarned(earned);
-      setGameState('results');
-    }, 1000);
-  };
-
-  const handleReturnToHome = () => {
-    onBack?.();
+  const handleSimulateGame = () => {
+    toast.success('Game simulation started!');
   };
 
   const teamAPlayers = players.filter(p => p.team === 1);
   const teamBPlayers = players.filter(p => p.team === 2);
-  const currentUserTeam = players.find(p => p.isCurrentUser)?.team || 1;
-  const readyPlayersCount = players.filter(p => p.isReady).length;
 
-  // EMPTY STATE
   if (!gameData) {
     return (
       <div className="h-screen w-full max-w-md mx-auto bg-gray-50 flex flex-col pb-20">
         <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-green-600 pt-8 pb-6 px-6 rounded-b-[2rem]">
-          <div className="flex items-center gap-3 mb-2">
+          <div className="flex items-center gap-3">
             <button onClick={onBack} className="bg-white/20 backdrop-blur-sm p-2 rounded-xl">
               <ArrowLeft className="w-5 h-5 text-white" />
             </button>
@@ -249,206 +129,39 @@ export function QueueScreen({ onBack, onLeaveGame, onFinishGame, gameData, isHos
     );
   }
 
-  // RESULTS STATE
-  if (gameState === 'results') {
-    return (
-      <div className="h-screen w-full max-w-md mx-auto bg-gray-50 flex flex-col pb-20">
-        <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-green-600 pt-8 pb-6 px-6 rounded-b-[2rem]">
-          <h1 className="text-white text-2xl font-bold">Match Complete!</h1>
-          <p className="text-white/80 text-sm">{gameData.title}</p>
-        </div>
-
-        <ScrollArea className="flex-1 px-6 mt-6">
-          <div className="space-y-6 pb-40">
-            {/* Final Score */}
-            <div className="bg-white rounded-2xl shadow-lg p-6 space-y-4">
-              <h3 className="text-gray-900 text-center font-semibold">Final Score</h3>
-              <div className="flex items-center justify-around">
-                <div className="text-center">
-                  <div className="text-5xl font-bold text-blue-600">{teamAScore}</div>
-                  <p className="text-sm text-gray-600 mt-2">Team A</p>
-                </div>
-                <div className="text-2xl text-gray-400">vs</div>
-                <div className="text-center">
-                  <div className="text-5xl font-bold text-purple-600">{teamBScore}</div>
-                  <p className="text-sm text-gray-600 mt-2">Team B</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Points Earned */}
-            <div className="bg-gradient-to-br from-blue-500 to-green-500 rounded-2xl shadow-lg p-6 text-white text-center">
-              <Award className="w-8 h-8 mx-auto mb-2" />
-              <p className="text-white/90 text-sm">Points Earned</p>
-              <p className="text-5xl font-bold">{pointsEarned}</p>
-              <p className="text-white/80 text-xs mt-4">Great match!</p>
-            </div>
-          </div>
-        </ScrollArea>
-
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-3rem)] max-w-sm">
-          <Button
-            onClick={handleReturnToHome}
-            className="w-full bg-gradient-to-r from-blue-600 to-green-600 text-white rounded-2xl font-semibold py-3"
-          >
-            <RotateCcw className="w-4 h-4 mr-2" />
-            Return to Home
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  // HOST SCORING STATE
-  if (gameState === 'scoring' && isHost) {
-    return (
-      <div className="h-screen w-full max-w-md mx-auto bg-gray-50 flex flex-col pb-24">
-        <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-green-600 pt-8 pb-6 px-6 rounded-b-[2rem]">
-          <h1 className="text-white text-2xl font-bold">Enter Final Score</h1>
-          <p className="text-white/80 text-sm">{gameData.title}</p>
-        </div>
-
-        <ScrollArea className="flex-1 px-6 mt-8">
-          <div className="space-y-6 pb-40">
-            {/* Game Info */}
-            <div className="bg-white rounded-2xl shadow-lg p-4 space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-gray-600 text-sm">Sport</span>
-                <span className="text-gray-900 font-medium">{gameData.sport}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-600 text-sm">Location</span>
-                <span className="text-gray-900 font-medium">{gameData.location}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-gray-600 text-sm">Players</span>
-                <span className="text-gray-900 font-medium">{players.length}</span>
-              </div>
-            </div>
-
-            {/* Score Input */}
-            <div className="bg-white rounded-2xl shadow-lg p-6 space-y-4">
-              <h3 className="text-gray-900 font-semibold">What was the final score?</h3>
-              
-              {/* Team A Score */}
-              <div className="space-y-2">
-                <label className="text-sm text-gray-600">Team A Score</label>
-                <input
-                  type="number"
-                  value={hostScore.teamA}
-                  onChange={(e) => setHostScore({ ...hostScore, teamA: parseInt(e.target.value) || 0 })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl text-3xl text-center font-bold focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="0"
-                />
-              </div>
-
-              {/* Team B Score */}
-              <div className="space-y-2">
-                <label className="text-sm text-gray-600">Team B Score</label>
-                <input
-                  type="number"
-                  value={hostScore.teamB}
-                  onChange={(e) => setHostScore({ ...hostScore, teamB: parseInt(e.target.value) || 0 })}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-xl text-3xl text-center font-bold focus:outline-none focus:ring-2 focus:ring-green-500"
-                  placeholder="0"
-                />
-              </div>
-            </div>
-
-            {/* Submit Button */}
-            <Button
-              onClick={handleHostSubmitScore}
-              className="w-full bg-gradient-to-r from-blue-600 to-green-600 text-white rounded-2xl font-semibold py-3"
-            >
-              Submit Score
-            </Button>
-          </div>
-        </ScrollArea>
-      </div>
-    );
-  }
-
-  // PLAYER VOTING STATE
-  if (gameState === 'voting' && !isHost) {
-    return (
-      <div className="h-screen w-full max-w-md mx-auto bg-gray-50 flex flex-col pb-24">
-        <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-green-600 pt-8 pb-6 px-6 rounded-b-[2rem]">
-          <h1 className="text-white text-2xl font-bold">Vote on Score</h1>
-          <p className="text-white/80 text-sm">{gameData.title}</p>
-        </div>
-
-        <ScrollArea className="flex-1 px-6 mt-8">
-          <div className="space-y-6 pb-40">
-            {/* Score Display */}
-            <div className="bg-white rounded-2xl shadow-lg p-6 space-y-4">
-              <h3 className="text-gray-900 text-center font-semibold">Host's Score</h3>
-              <div className="flex items-center justify-around">
-                <div className="text-center">
-                  <div className="text-6xl font-bold text-blue-600">{teamAScore}</div>
-                  <p className="text-sm text-gray-600 mt-2">Team A</p>
-                </div>
-                <div className="text-2xl text-gray-400">vs</div>
-                <div className="text-center">
-                  <div className="text-6xl font-bold text-purple-600">{teamBScore}</div>
-                  <p className="text-sm text-gray-600 mt-2">Team B</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Question */}
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <p className="text-gray-900 text-center font-semibold">Do you agree with this score?</p>
-            </div>
-          </div>
-        </ScrollArea>
-
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 w-[calc(100%-3rem)] max-w-sm">
-          <Button
-            onClick={handlePlayerVoteScore}
-            disabled={playerVoted}
-            className={`w-full rounded-2xl font-semibold py-3 ${
-              playerVoted
-                ? 'bg-gray-400 text-white'
-                : 'bg-gradient-to-r from-blue-600 to-green-600 text-white hover:from-blue-700 hover:to-green-700'
-            }`}
-          >
-            {playerVoted ? '✓ Voted' : 'Agree'}
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  // COUNTDOWN STATE
-  if (gameState === 'countdown') {
-    return (
-      <div className="h-screen w-full max-w-md mx-auto bg-gray-50 flex flex-col items-center justify-center">
-        <div className="text-center space-y-6">
-          <h2 className="text-2xl font-bold text-gray-900">Game Starting In</h2>
-          <div className="text-8xl font-bold bg-gradient-to-br from-blue-600 to-green-600 bg-clip-text text-transparent animate-pulse">
-            {countdownSeconds}
-          </div>
-          <p className="text-gray-600">Get ready!</p>
-        </div>
-      </div>
-    );
-  }
-
-  // MAIN QUEUE STATE
   return (
     <div className="h-screen w-full max-w-md mx-auto bg-gray-50 flex flex-col pb-24">
-      {/* Header */}
-      <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-green-600 pt-8 pb-6 px-6 rounded-b-[2rem]">
-        <div className="flex items-center gap-3 mb-2">
+      {/* Header with Game Status */}
+      <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-green-600 pt-8 pb-8 px-6 rounded-b-3xl">
+        <div className="flex items-center gap-3 mb-4">
           <button
             onClick={onBack}
-            className="bg-white/20 backdrop-blur-sm p-2 rounded-xl hover:bg-white/30 transition"
+            className="bg-white/20 backdrop-blur-sm p-2.5 rounded-xl hover:bg-white/30 transition"
           >
             <ArrowLeft className="w-5 h-5 text-white" />
           </button>
-          <div>
-            <h1 className="text-white text-2xl font-bold">My Queue</h1>
-            <p className="text-white/80 text-sm">Active game</p>
+          <div className="flex-1">
+            <h1 className="text-white text-2xl font-bold">{gameData.title}</h1>
+            <p className="text-white/80 text-sm">{gameData.sport}</p>
+          </div>
+        </div>
+
+        {/* Game Status Card */}
+        <div className="bg-white/15 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 text-white/90">
+                <MapPin className="w-4 h-4" />
+                <span className="text-sm">{gameData.location}</span>
+              </div>
+              <div className="flex items-center gap-2 text-white/90">
+                <Clock className="w-4 h-4" />
+                <span className="text-sm">{gameData.time}</span>
+              </div>
+            </div>
+            <Badge className="bg-yellow-400 text-yellow-900 font-semibold text-xs px-3 py-1">
+              Waiting for Players
+            </Badge>
           </div>
         </div>
       </div>
@@ -456,91 +169,71 @@ export function QueueScreen({ onBack, onLeaveGame, onFinishGame, gameData, isHos
       {/* Content */}
       <ScrollArea className="flex-1 px-6 mt-6">
         <div className="space-y-4 pb-40">
-          {/* Game Info Card */}
-          <div className="bg-white rounded-2xl shadow-lg p-4 space-y-3">
-            <div className="flex items-start justify-between">
+          {/* Status Message */}
+          <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4">
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5">
+                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
               <div>
-                <h2 className="text-3xl mb-1">{gameData.sport}</h2>
-                <h3 className="text-lg font-semibold text-gray-900">{gameData.title}</h3>
-              </div>
-              <Badge className={isHost ? "bg-blue-100 text-blue-700" : "bg-green-100 text-green-700"}>
-                {isHost ? 'Host' : 'Joined'}
-              </Badge>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <div className="flex items-center gap-2 text-gray-600">
-                <MapPin className="w-4 h-4" />
-                <span className="truncate">{gameData.location}</span>
-              </div>
-              <div className="flex items-center gap-2 text-gray-600">
-                <Calendar className="w-4 h-4" />
-                <span>{gameData.date}</span>
-              </div>
-              <div className="flex items-center gap-2 text-gray-600">
-                <Clock className="w-4 h-4" />
-                <span>{gameData.time}</span>
-              </div>
-              <div className="flex items-center gap-2 text-gray-600">
-                <Users className="w-4 h-4" />
-                <span>{players.length}/{gameData.maxPlayers}</span>
+                <p className="text-gray-900 font-medium text-sm">Waiting for all players to be ready</p>
+                <p className="text-blue-600 text-xs mt-1 font-semibold">{readyCount}/{players.length} players ready</p>
               </div>
             </div>
           </div>
 
-          {/* Your Status */}
-          <div className="bg-white rounded-2xl shadow-lg p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-gray-900 font-semibold">Your Status</h3>
-              <Badge variant={currentUserReady ? "default" : "outline"} className={currentUserReady ? "bg-green-600" : ""}>
-                {currentUserReady ? '✓ Ready' : 'Not Ready'}
-              </Badge>
-            </div>
+          {/* Quick Simulate Button */}
+          <Button
+            onClick={handleSimulateGame}
+            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-2xl font-semibold py-3 flex items-center justify-center gap-2"
+          >
+            <Zap className="w-5 h-5" />
+            Quick Simulate Game
+          </Button>
 
-            {!isHost && (
-              <div className="bg-blue-50 rounded-xl p-3 text-sm">
-                <p className="text-gray-700">
-                  <span className="font-semibold">{readyPlayersCount}/{players.length}</span> players ready
-                </p>
-                {allPlayersReady && (
-                  <p className="text-green-600 font-semibold mt-1">All ready! Starting...</p>
-                )}
-              </div>
-            )}
+          <p className="text-center text-gray-500 text-xs">or manually play:</p>
 
-            <div className="flex items-center justify-between bg-blue-50 rounded-xl p-3">
-              <div>
-                <p className="text-xs text-gray-600">Your Team</p>
-                <p className="text-gray-900 font-semibold">Team {currentUserTeam === 1 ? 'A' : 'B'}</p>
-              </div>
-              <Button
-                onClick={handleSwitchTeam}
-                disabled={currentUserReady}
-                variant="outline"
-                size="sm"
-                className="rounded-lg text-xs"
-              >
-                Switch Team
-              </Button>
-            </div>
+          {/* Action Buttons */}
+          <div className="space-y-3">
+            <Button
+              onClick={handleSwitchTeam}
+              disabled={userReady}
+              variant="outline"
+              className="w-full rounded-2xl py-3 font-semibold border-gray-300"
+            >
+              Switch Team
+            </Button>
 
             <Button
-              onClick={handleActionClick}
-              className={`w-full rounded-2xl font-semibold py-3 text-base ${
-                currentUserReady
+              onClick={handleReady}
+              className={`w-full rounded-2xl py-3 font-semibold text-white ${
+                userReady
                   ? 'bg-gray-600 hover:bg-gray-700'
                   : 'bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700'
               }`}
             >
-              {isHost ? (currentUserReady ? 'Stop Game' : 'Start Now') : (currentUserReady ? 'Not Ready' : "I'm Ready!")}
+              {userReady ? 'Not Ready' : "I'm Ready!"}
+            </Button>
+
+            <Button
+              onClick={() => gameData && onLeaveGame?.(gameData.id)}
+              variant="outline"
+              className="w-full rounded-2xl py-3 font-semibold border-red-200 text-red-600 hover:bg-red-50"
+            >
+              Leave Game
             </Button>
           </div>
 
-          {/* Team A */}
-          <div className="bg-white rounded-2xl shadow-lg p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-gray-900 font-semibold">Team A</h3>
-              <Badge variant="outline" className="text-xs">{teamAPlayers.length} players</Badge>
+          {/* Team 1 */}
+          <div className="bg-white rounded-2xl shadow-lg p-4 mt-2">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-blue-600"></div>
+                <h3 className="text-gray-900 font-semibold">Team 1</h3>
+              </div>
+              <span className="text-gray-600 text-sm font-medium">{teamAPlayers.length} players</span>
             </div>
             <div className="space-y-2">
               {teamAPlayers.map((player) => (
@@ -562,7 +255,7 @@ export function QueueScreen({ onBack, onLeaveGame, onFinishGame, gameData, isHos
                   disabled={player.isCurrentUser}
                   className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors text-left ${
                     player.isCurrentUser
-                      ? 'bg-blue-50 border border-blue-200 cursor-default'
+                      ? 'bg-blue-50 border border-blue-200'
                       : 'bg-gray-50 hover:bg-gray-100 cursor-pointer'
                   }`}
                 >
@@ -573,26 +266,26 @@ export function QueueScreen({ onBack, onLeaveGame, onFinishGame, gameData, isHos
                   </Avatar>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="text-sm text-gray-900 truncate">{player.name}</p>
+                      <p className="text-sm text-gray-900 font-medium truncate">{player.name}</p>
                       {player.verified && <CheckCircle2 className="w-3 h-3 text-blue-600 flex-shrink-0" />}
                     </div>
                   </div>
                   {player.isCurrentUser && (
                     <Badge className="bg-blue-600 text-white text-xs flex-shrink-0">You</Badge>
                   )}
-                  {player.isReady && (
-                    <Badge className="bg-green-600 text-white text-xs flex-shrink-0">✓ Ready</Badge>
-                  )}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Team B */}
+          {/* Team 2 */}
           <div className="bg-white rounded-2xl shadow-lg p-4">
-            <div className="flex items-center justify-between mb-3">
-              <h3 className="text-gray-900 font-semibold">Team B</h3>
-              <Badge variant="outline" className="text-xs">{teamBPlayers.length} players</Badge>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-purple-600"></div>
+                <h3 className="text-gray-900 font-semibold">Team 2</h3>
+              </div>
+              <span className="text-gray-600 text-sm font-medium">{teamBPlayers.length} players</span>
             </div>
             <div className="space-y-2">
               {teamBPlayers.map((player) => (
@@ -614,7 +307,7 @@ export function QueueScreen({ onBack, onLeaveGame, onFinishGame, gameData, isHos
                   disabled={player.isCurrentUser}
                   className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors text-left ${
                     player.isCurrentUser
-                      ? 'bg-blue-50 border border-blue-200 cursor-default'
+                      ? 'bg-blue-50 border border-blue-200'
                       : 'bg-gray-50 hover:bg-gray-100 cursor-pointer'
                   }`}
                 >
@@ -625,30 +318,16 @@ export function QueueScreen({ onBack, onLeaveGame, onFinishGame, gameData, isHos
                   </Avatar>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <p className="text-sm text-gray-900 truncate">{player.name}</p>
+                      <p className="text-sm text-gray-900 font-medium truncate">{player.name}</p>
                       {player.verified && <CheckCircle2 className="w-3 h-3 text-blue-600 flex-shrink-0" />}
                     </div>
                   </div>
                   {player.isCurrentUser && (
                     <Badge className="bg-blue-600 text-white text-xs flex-shrink-0">You</Badge>
                   )}
-                  {player.isReady && (
-                    <Badge className="bg-green-600 text-white text-xs flex-shrink-0">✓ Ready</Badge>
-                  )}
                 </button>
               ))}
             </div>
-          </div>
-
-          {/* Cancel/Leave */}
-          <div className="bg-white rounded-2xl shadow-lg p-4">
-            <Button
-              variant="outline"
-              className="w-full rounded-xl border-red-200 text-red-600 hover:bg-red-50"
-              onClick={() => gameData && onLeaveGame?.(gameData.id)}
-            >
-              {isHost ? 'Cancel Game' : 'Leave Game'}
-            </Button>
           </div>
         </div>
       </ScrollArea>
