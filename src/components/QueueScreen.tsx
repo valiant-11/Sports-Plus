@@ -39,7 +39,7 @@ type GameState = 'waiting' | 'active' | 'vote-score' | 'rescore' | 'revote-score
 
 const skillLevels: ('Casual' | 'Novice' | 'Elite')[] = ['Casual', 'Novice', 'Elite'];
 
-const reportReasons = [
+const reportReasonsArray = [
   'Inappropriate behavior',
   "Didn't show up",
   'Poor sportsmanship',
@@ -64,7 +64,7 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
   const [playerRatings, setPlayerRatings] = useState<{ [key: string]: number }>({});
   const [playerComments, setPlayerComments] = useState<{ [key: string]: string }>({});
   const [showReportModal, setShowReportModal] = useState(false);
-  const [reportReasons, setReportReasons] = useState<string[]>([]);
+  const [selectedReportReasons, setSelectedReportReasons] = useState<string[]>([]);
   const [reportComment, setReportComment] = useState('');
   const [hasUserVoted, setHasUserVoted] = useState(false);
   const [userVote, setUserVote] = useState<'approve' | 'disagree' | null>(null);
@@ -176,6 +176,7 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
       setTimeout(() => {
         setVotesDisapproved(players.length - 1); // Most disagree
         toast.warning('Majority disagrees! Need to re-enter score...');
+        setGameState('rescore');
       }, 1500);
     }
   };
@@ -234,13 +235,13 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
   };
 
   const handleSubmitReport = () => {
-    if (reportReasons.length === 0) {
+    if (selectedReportReasons.length === 0) {
       toast.error('Please select at least one reason');
       return;
     }
     toast.success('Report submitted successfully');
     setShowReportModal(false);
-    setReportReasons([]);
+    setSelectedReportReasons([]);
     setReportComment('');
   };
 
@@ -258,7 +259,7 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
   };
 
   const toggleReportReason = (reason: string) => {
-    setReportReasons(prev =>
+    setSelectedReportReasons(prev =>
       prev.includes(reason)
         ? prev.filter(r => r !== reason)
         : [...prev, reason]
@@ -294,52 +295,54 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
           <p className="text-white/80 text-sm">Do you agree with this score?</p>
         </div>
 
-        <div className="flex-1 flex items-center justify-center px-6">
-          <div className="bg-white rounded-2xl shadow-lg p-8 text-center w-full">
-            <Trophy className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
-            <h2 className="text-gray-900 font-bold text-xl mb-2">Score Confirmation</h2>
-            <p className="text-gray-600 mb-6 text-2xl font-bold">Team 1: {team1Score} vs Team 2: {team2Score}</p>
-            
-            {!hasUserVoted && (
-              <div className="grid grid-cols-2 gap-3 mb-6">
-                <Button
-                  onClick={() => handleVoteScore('approve')}
-                  className="rounded-2xl py-3 font-semibold text-white bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 flex items-center justify-center gap-2"
-                >
-                  <CheckCircle2 className="w-4 h-4" />
-                  Agree
-                </Button>
-                <Button
-                  onClick={() => handleVoteScore('disagree')}
-                  className="rounded-2xl py-3 font-semibold text-white bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 flex items-center justify-center gap-2"
-                >
-                  <X className="w-4 h-4" />
-                  Disagree
-                </Button>
-              </div>
-            )}
+        <ScrollArea className="flex-1 px-6 py-8">
+          <div className="pb-32">
+            <div className="bg-white rounded-2xl shadow-lg p-8 text-center w-full">
+              <Trophy className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
+              <h2 className="text-gray-900 font-bold text-xl mb-2">Score Confirmation</h2>
+              <p className="text-gray-600 mb-6 text-2xl font-bold">Team 1: {team1Score} vs Team 2: {team2Score}</p>
+              
+              {!hasUserVoted && (
+                <div className="grid grid-cols-2 gap-3 mb-6">
+                  <Button
+                    onClick={() => handleVoteScore('approve')}
+                    className="rounded-2xl py-3 font-semibold text-white bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 flex items-center justify-center gap-2"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    Agree
+                  </Button>
+                  <Button
+                    onClick={() => handleVoteScore('disagree')}
+                    className="rounded-2xl py-3 font-semibold text-white bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 flex items-center justify-center gap-2"
+                  >
+                    <X className="w-4 h-4" />
+                    Disagree
+                  </Button>
+                </div>
+              )}
 
-            {votesDisapproved > 0 && (
-              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
-                <p className="text-sm text-red-700 font-semibold mb-3">Votes Against:</p>
-                <p className="text-lg font-bold text-red-600">{votesDisapproved}/{players.length}</p>
-              </div>
-            )}
+              {votesDisapproved > 0 && (
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
+                  <p className="text-sm text-red-700 font-semibold mb-3">Votes Against:</p>
+                  <p className="text-lg font-bold text-red-600">{votesDisapproved}/{players.length}</p>
+                </div>
+              )}
 
-            {votesApproved > 0 && (
-              <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl">
-                <p className="text-sm text-green-700 font-semibold mb-3">Votes For:</p>
-                <p className="text-lg font-bold text-green-600">{votesApproved}/{players.length}</p>
-              </div>
-            )}
+              {votesApproved > 0 && (
+                <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl">
+                  <p className="text-sm text-green-700 font-semibold mb-3">Votes For:</p>
+                  <p className="text-lg font-bold text-green-600">{votesApproved}/{players.length}</p>
+                </div>
+              )}
 
-            {userVote === 'disagree' && votesDisapproved >= Math.ceil(players.length * 0.6) && (
-              <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
-                <p className="text-sm text-blue-700 font-semibold">✓ Majority disagrees. You need to enter the correct score.</p>
-              </div>
-            )}
+              {userVote === 'disagree' && votesDisapproved >= Math.ceil(players.length * 0.6) && (
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                  <p className="text-sm text-blue-700 font-semibold">✓ Majority disagrees. You will enter the correct score next.</p>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        </ScrollArea>
       </div>
     );
   }
@@ -356,7 +359,8 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
         <ScrollArea className="flex-1 px-6 py-6">
           <div className="space-y-6 pb-32">
             <div className="bg-white rounded-2xl shadow-lg p-6">
-              <h2 className="text-gray-900 font-bold text-xl mb-6 text-center">Correct Final Score</h2>
+              <h2 className="text-gray-900 font-bold text-xl mb-2 text-center">Correct Final Score</h2>
+              <p className="text-gray-600 text-sm text-center mb-6">Majority disagreed with the score. Please enter the correct score:</p>
               
               <div className="space-y-4">
                 <div>
@@ -547,7 +551,7 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
         {/* Report Modal */}
         {showReportModal && (
           <div className="fixed inset-0 bg-black/50 flex items-end max-w-md mx-auto z-50">
-            <div className="bg-white w-full rounded-t-3xl p-6 shadow-2xl animate-in slide-in-from-bottom">
+            <div className="bg-white w-full rounded-t-3xl p-6 shadow-2xl animate-in slide-in-from-bottom max-h-[80vh] overflow-y-auto">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-gray-900 font-bold text-lg">Report {currentPlayer.name}</h3>
                 <button onClick={() => setShowReportModal(false)} className="text-gray-500 hover:text-gray-700">
@@ -557,12 +561,12 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
 
               <div className="mb-4">
                 <p className="text-sm text-gray-600 font-semibold mb-3">What happened? (Select all that apply)</p>
-                <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {reportReasons.map((reason) => (
+                <div className="space-y-2">
+                  {reportReasonsArray.map((reason) => (
                     <label key={reason} className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer">
                       <input
                         type="checkbox"
-                        checked={reportReasons.includes(reason)}
+                        checked={selectedReportReasons.includes(reason)}
                         onChange={() => toggleReportReason(reason)}
                         className="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-600"
                       />
