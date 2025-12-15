@@ -223,6 +223,7 @@ export default function App() {
       id: newGameId,
       title: gameData.title,
       sport: gameData.sport,
+      skillLevels: gameData.skillLevels,
       location: gameData.location,
       date: gameData.date,
       time: gameData.time,
