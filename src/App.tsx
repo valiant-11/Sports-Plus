@@ -193,6 +193,13 @@ export default function App() {
     }
   };
 
+  const handleRemoveJoinedGame = (gameId: string) => {
+    setJoinedGames(prev => prev.filter(id => id !== gameId));
+    setCreatedGameData(null);
+    setSelectedGameId(null);
+    toast.info('You have left the game');
+  };
+
   const handleCreateGame = (gameData: any) => {
     const newGameId = 'game-' + Date.now();
     const newGame = {
@@ -285,6 +292,8 @@ export default function App() {
   const handleParticipantFeedbackComplete = () => {
     // Remove from joined games
     setJoinedGames([]);
+    setCreatedGameData(null);
+    setSelectedGameId(null);
     setParticipantFeedbackData(null);
     setCurrentScreen('history');
     setActiveTab('home');
@@ -374,6 +383,7 @@ export default function App() {
             setActiveTab('chat');
           }}
           onRequestLocation={handleRequestLocation}
+          onRemoveJoinedGame={handleRemoveJoinedGame}
         />
       )}
 
@@ -391,8 +401,7 @@ export default function App() {
               handleGameCancel();
             } else {
               // If participant, leave the game
-              handleJoinGame(gameId); // This toggles the join state
-              setCreatedGameData(null);
+              handleRemoveJoinedGame(gameId);
               setCurrentScreen('home');
               setActiveTab('home');
             }
