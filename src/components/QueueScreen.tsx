@@ -35,9 +35,19 @@ interface Player {
   skillLevel?: 'Casual' | 'Novice' | 'Elite';
 }
 
-type GameState = 'waiting' | 'active' | 'finish-score' | 'vote-score' | 'rating' | 'completed';
+type GameState = 'waiting' | 'active' | 'vote-score' | 'rescore' | 'revote-score' | 'rating' | 'completed';
 
 const skillLevels: ('Casual' | 'Novice' | 'Elite')[] = ['Casual', 'Novice', 'Elite'];
+
+const reportReasons = [
+  'Inappropriate behavior',
+  "Didn't show up",
+  'Poor sportsmanship',
+  'Cheating/unfair play',
+  'Verbal abuse',
+  'Left early',
+  'Other'
+];
 
 export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: QueueScreenProps) {
   const [selectedPlayer, setSelectedPlayer] = useState<any>(null);
@@ -49,11 +59,15 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
   const [team1Score, setTeam1Score] = useState('');
   const [team2Score, setTeam2Score] = useState('');
   const [votesApproved, setVotesApproved] = useState(0);
+  const [votesDisapproved, setVotesDisapproved] = useState(0);
   const [currentRatingIndex, setCurrentRatingIndex] = useState(0);
   const [playerRatings, setPlayerRatings] = useState<{ [key: string]: number }>({});
   const [playerComments, setPlayerComments] = useState<{ [key: string]: string }>({});
   const [showReportModal, setShowReportModal] = useState(false);
-  const [reportReason, setReportReason] = useState('');
+  const [reportReasons, setReportReasons] = useState<string[]>([]);
+  const [reportComment, setReportComment] = useState('');
+  const [hasUserVoted, setHasUserVoted] = useState(false);
+  const [userVote, setUserVote] = useState<'approve' | 'disagree' | null>(null);
 
   useEffect(() => {
     if (gameData) {
@@ -61,19 +75,41 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
     }
   }, [gameData?.maxPlayers]);
 
-  // Auto-ready all players after 5 seconds (simulation)
+  // Auto-join and start game flow
   useEffect(() => {
-    if (isHost && gameState === 'waiting' && players.length > 0) {
+    if (!isHost && gameState === 'waiting' && players.length > 0 && !userReady) {
+      // Simulate auto-readying user after joining
       const timer = setTimeout(() => {
-        // Auto-ready all players
+        setUserReady(true);
+        setReadyCount(prev => prev + 1);
+        toast.success('You joined! You are ready!');
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [isHost, gameState, players, userReady]);
+
+  // Auto-ready all other players and start game
+  useEffect(() => {
+    if (gameState === 'waiting' && players.length > 0 && readyCount > 0 && readyCount < players.length) {
+      const timer = setTimeout(() => {
+        // Auto-ready remaining players
         const updatedPlayers = players.map(p => ({ ...p, ready: true }));
         setPlayers(updatedPlayers);
         setReadyCount(players.length);
         toast.success('All players are ready!');
-      }, 5000);
+
+        // Auto-start game after another delay
+        const startTimer = setTimeout(() => {
+          setGameState('vote-score');
+          setTeam1Score('12');
+          setTeam2Score('15');
+          toast.success('Game finished! Voting on final score...');
+        }, 2000);
+        return () => clearTimeout(startTimer);
+      }, 4000);
       return () => clearTimeout(timer);
     }
-  }, [isHost, gameState, players]);
+  }, [gameState, players, readyCount]);
 
   const initializePlayers = () => {
     if (!gameData) return;
@@ -125,50 +161,64 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
     }
   };
 
-  const handleStartGame = () => {
-    setGameState('active');
-    toast.success('Game started! Play now...');
+  const handleVoteScore = (vote: 'approve' | 'disagree') => {
+    setUserVote(vote);
+    setHasUserVoted(true);
+    
+    if (vote === 'approve') {
+      setVotesApproved(prev => prev + 1);
+      toast.success('You approved the score!');
+    } else {
+      setVotesDisapproved(prev => prev + 1);
+      toast.info('You disagree with the score. You will need to enter the correct score.');
+      
+      // Simulate other votes coming in (majority disagree)
+      setTimeout(() => {
+        setVotesDisapproved(players.length - 1); // Most disagree
+        toast.warning('Majority disagrees! Need to re-enter score...');
+      }, 1500);
+    }
   };
 
-  const handleFinishGame = () => {
-    setGameState('finish-score');
-    toast.info('Enter final scores for voting');
-  };
-
-  const handleSubmitScore = () => {
+  const handleRescore = () => {
     if (!team1Score || !team2Score) {
-      toast.error('Please enter scores for both teams');
+      toast.error('Please enter correct scores for both teams');
       return;
     }
-    setGameState('vote-score');
-    toast.info('Players are voting on the score...');
     
-    // Simulate votes coming in
-    let voteCount = 0;
+    // Reset votes and simulate new vote
+    setVotesApproved(0);
+    setVotesDisapproved(0);
+    setHasUserVoted(false);
+    setUserVote(null);
+    setGameState('revote-score');
+    toast.info('New score submitted. Players are voting again...');
+
+    // Simulate votes with majority approval this time
+    let approveCount = 0;
     const voteInterval = setInterval(() => {
-      voteCount++;
-      setVotesApproved(voteCount);
-      if (voteCount >= players.length) {
+      approveCount++;
+      setVotesApproved(approveCount);
+      if (approveCount >= Math.ceil(players.length * 0.7)) {
         clearInterval(voteInterval);
         setTimeout(() => {
           setGameState('rating');
-          toast.success('All players approved! Moving to rating...');
+          setVotesApproved(0);
+          setVotesDisapproved(0);
+          setHasUserVoted(false);
+          setUserVote(null);
+          toast.success('Score approved! Moving to rating...');
         }, 1000);
       }
-    }, 500);
+    }, 400);
   };
 
   const handleRatePlayer = () => {
     const currentPlayer = players[currentRatingIndex];
     const rating = playerRatings[currentPlayer.id] || 0;
-    const comment = playerComments[currentPlayer.id] || '';
 
     if (rating === 0) {
       toast.error('Please select a rating');
-      return;
-    }
-    if (!comment.trim()) {
-      toast.error('Please add a comment');
       return;
     }
 
@@ -184,13 +234,14 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
   };
 
   const handleSubmitReport = () => {
-    if (!reportReason.trim()) {
-      toast.error('Please provide a reason for the report');
+    if (reportReasons.length === 0) {
+      toast.error('Please select at least one reason');
       return;
     }
     toast.success('Report submitted successfully');
     setShowReportModal(false);
-    setReportReason('');
+    setReportReasons([]);
+    setReportComment('');
   };
 
   const handleReturnToMenu = () => {
@@ -204,6 +255,14 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
     }
     setUserTeam(userTeam === 1 ? 2 : 1);
     toast.success(`Switched to Team ${userTeam === 1 ? 2 : 1}`);
+  };
+
+  const toggleReportReason = (reason: string) => {
+    setReportReasons(prev =>
+      prev.includes(reason)
+        ? prev.filter(r => r !== reason)
+        : [...prev, reason]
+    );
   };
 
   const getSkillBadgeColor = (skill?: string) => {
@@ -222,24 +281,82 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
   const teamAPlayers = players.filter(p => p.team === 1);
   const teamBPlayers = players.filter(p => p.team === 2);
 
-  // FINISH SCORE SCREEN
-  if (gameState === 'finish-score') {
+  // VOTE SCORE SCREEN (First vote - majority disagree)
+  if (gameState === 'vote-score') {
+    const totalVotes = votesApproved + votesDisapproved;
+    const disagreeExpected = Math.ceil(players.length * 0.7);
+    const voteProgress = Math.min(totalVotes, disagreeExpected);
+
     return (
       <div className="h-screen w-full max-w-md mx-auto bg-gray-50 flex flex-col">
         <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-green-600 pt-8 pb-8 px-6 rounded-b-3xl">
-          <div className="flex items-center gap-3 mb-4">
-            <h1 className="text-white text-2xl font-bold flex-1">{gameData?.title}</h1>
-            <Badge className="bg-green-400 text-green-900 font-semibold text-xs px-2.5 py-1 flex-shrink-0">
-              Active
-            </Badge>
+          <h1 className="text-white text-2xl font-bold">Score Voting</h1>
+          <p className="text-white/80 text-sm">Do you agree with this score?</p>
+        </div>
+
+        <div className="flex-1 flex items-center justify-center px-6">
+          <div className="bg-white rounded-2xl shadow-lg p-8 text-center w-full">
+            <Trophy className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
+            <h2 className="text-gray-900 font-bold text-xl mb-2">Score Confirmation</h2>
+            <p className="text-gray-600 mb-6 text-2xl font-bold">Team 1: {team1Score} vs Team 2: {team2Score}</p>
+            
+            {!hasUserVoted && (
+              <div className="grid grid-cols-2 gap-3 mb-6">
+                <Button
+                  onClick={() => handleVoteScore('approve')}
+                  className="rounded-2xl py-3 font-semibold text-white bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 flex items-center justify-center gap-2"
+                >
+                  <CheckCircle2 className="w-4 h-4" />
+                  Agree
+                </Button>
+                <Button
+                  onClick={() => handleVoteScore('disagree')}
+                  className="rounded-2xl py-3 font-semibold text-white bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 flex items-center justify-center gap-2"
+                >
+                  <X className="w-4 h-4" />
+                  Disagree
+                </Button>
+              </div>
+            )}
+
+            {votesDisapproved > 0 && (
+              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
+                <p className="text-sm text-red-700 font-semibold mb-3">Votes Against:</p>
+                <p className="text-lg font-bold text-red-600">{votesDisapproved}/{players.length}</p>
+              </div>
+            )}
+
+            {votesApproved > 0 && (
+              <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl">
+                <p className="text-sm text-green-700 font-semibold mb-3">Votes For:</p>
+                <p className="text-lg font-bold text-green-600">{votesApproved}/{players.length}</p>
+              </div>
+            )}
+
+            {userVote === 'disagree' && votesDisapproved >= Math.ceil(players.length * 0.6) && (
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                <p className="text-sm text-blue-700 font-semibold">✓ Majority disagrees. You need to enter the correct score.</p>
+              </div>
+            )}
           </div>
-          <p className="text-white/80 text-sm">Enter final scores</p>
+        </div>
+      </div>
+    );
+  }
+
+  // RESCORE SCREEN (User enters correct score)
+  if (gameState === 'rescore') {
+    return (
+      <div className="h-screen w-full max-w-md mx-auto bg-gray-50 flex flex-col">
+        <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-green-600 pt-8 pb-8 px-6 rounded-b-3xl">
+          <h1 className="text-white text-2xl font-bold">Re-enter Score</h1>
+          <p className="text-white/80 text-sm">What was the correct final score?</p>
         </div>
 
         <ScrollArea className="flex-1 px-6 py-6">
           <div className="space-y-6 pb-32">
             <div className="bg-white rounded-2xl shadow-lg p-6">
-              <h2 className="text-gray-900 font-bold text-xl mb-6 text-center">Final Score</h2>
+              <h2 className="text-gray-900 font-bold text-xl mb-6 text-center">Correct Final Score</h2>
               
               <div className="space-y-4">
                 <div>
@@ -271,14 +388,14 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
 
               <div className="grid grid-cols-2 gap-3 mt-8">
                 <Button
-                  onClick={() => setGameState('active')}
+                  onClick={() => setGameState('vote-score')}
                   variant="outline"
                   className="rounded-2xl py-3 font-semibold border-gray-300"
                 >
-                  Cancel
+                  Back
                 </Button>
                 <Button
-                  onClick={handleSubmitScore}
+                  onClick={handleRescore}
                   className="rounded-2xl py-3 font-semibold text-white bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
                 >
                   Submit Score
@@ -291,23 +408,23 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
     );
   }
 
-  // VOTE SCORE SCREEN
-  if (gameState === 'vote-score') {
+  // REVOTE SCORE SCREEN (Second vote - majority agrees)
+  if (gameState === 'revote-score') {
     return (
       <div className="h-screen w-full max-w-md mx-auto bg-gray-50 flex flex-col">
         <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-green-600 pt-8 pb-8 px-6 rounded-b-3xl">
-          <h1 className="text-white text-2xl font-bold">Score Voting</h1>
-          <p className="text-white/80 text-sm">Players voting on final score...</p>
+          <h1 className="text-white text-2xl font-bold">Final Score Vote</h1>
+          <p className="text-white/80 text-sm">New score submitted - voting again...</p>
         </div>
 
         <div className="flex-1 flex items-center justify-center px-6">
           <div className="bg-white rounded-2xl shadow-lg p-8 text-center w-full">
             <Trophy className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
-            <h2 className="text-gray-900 font-bold text-xl mb-2">Score Confirmation</h2>
-            <p className="text-gray-600 mb-6">Team 1: {team1Score} vs Team 2: {team2Score}</p>
+            <h2 className="text-gray-900 font-bold text-xl mb-2">Final Score Confirmation</h2>
+            <p className="text-gray-600 mb-6 text-2xl font-bold">Team 1: {team1Score} vs Team 2: {team2Score}</p>
             
             <div className="mb-6">
-              <p className="text-sm text-gray-600 font-semibold mb-3">Players Approved:</p>
+              <p className="text-sm text-gray-600 font-semibold mb-3">Players Approving:</p>
               <div className="flex flex-wrap gap-2 justify-center">
                 {players.map((player, index) => (
                   <Badge
@@ -324,7 +441,11 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
               </div>
             </div>
 
-            <p className="text-lg font-bold text-blue-600">{votesApproved}/{players.length}</p>
+            <p className="text-lg font-bold text-green-600">{votesApproved}/{players.length} Approved</p>
+            
+            {votesApproved >= Math.ceil(players.length * 0.7) && (
+              <p className="text-sm text-green-600 font-semibold mt-4">✓ Score confirmed! Moving to rating...</p>
+            )}
           </div>
         </div>
       </div>
@@ -383,7 +504,7 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
                   value={currentComment}
                   onChange={(e) => setPlayerComments(prev => ({ ...prev, [currentPlayer.id]: e.target.value }))}
                   placeholder="Why did you give this rating? E.g., Great teamwork, Good defense, Could improve..."
-                  className="w-full rounded-xl p-3 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 resize-none h-24"
+                  className="w-full rounded-xl p-3 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 resize-none h-20"
                 />
               </div>
 
@@ -434,12 +555,32 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
                 </button>
               </div>
 
-              <textarea
-                value={reportReason}
-                onChange={(e) => setReportReason(e.target.value)}
-                placeholder="Tell us why you're reporting this player. E.g., Inappropriate behavior, Didn't show up, etc."
-                className="w-full rounded-xl p-3 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-red-600 resize-none h-24 mb-4"
-              />
+              <div className="mb-4">
+                <p className="text-sm text-gray-600 font-semibold mb-3">What happened? (Select all that apply)</p>
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {reportReasons.map((reason) => (
+                    <label key={reason} className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={reportReasons.includes(reason)}
+                        onChange={() => toggleReportReason(reason)}
+                        className="w-4 h-4 rounded border-gray-300 text-red-600 focus:ring-red-600"
+                      />
+                      <span className="text-sm text-gray-700">{reason}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div className="mb-4">
+                <label className="text-sm text-gray-600 font-semibold mb-2 block">Additional details (optional)</label>
+                <textarea
+                  value={reportComment}
+                  onChange={(e) => setReportComment(e.target.value)}
+                  placeholder="Provide more context about your report..."
+                  className="w-full rounded-xl p-3 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-red-600 resize-none h-20"
+                />
+              </div>
 
               <div className="flex gap-3">
                 <Button
@@ -488,109 +629,6 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
             </Button>
           </div>
         </div>
-      </div>
-    );
-  }
-
-  // ACTIVE GAME SCREEN
-  if (gameState === 'active') {
-    return (
-      <div className="h-screen w-full max-w-md mx-auto bg-gray-50 flex flex-col">
-        <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-green-600 pt-8 pb-8 px-6 rounded-b-3xl">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="flex-1">
-              <h1 className="text-white text-2xl font-bold">{gameData?.title}</h1>
-              <p className="text-white/80 text-sm">{gameData?.sport}</p>
-            </div>
-            <Badge className="bg-green-400 text-green-900 font-semibold text-xs px-2.5 py-1 flex-shrink-0">
-              Live
-            </Badge>
-          </div>
-        </div>
-
-        <ScrollArea className="flex-1 px-6 mt-6">
-          <div className="space-y-4 pb-32">
-            <div className="bg-gradient-to-r from-blue-600 to-green-600 rounded-2xl p-6 text-white text-center">
-              <p className="text-sm opacity-90 mb-2">Game in Progress</p>
-              <p className="text-3xl font-bold">Playing Now!</p>
-            </div>
-
-            {/* Team 1 */}
-            <div className="bg-white rounded-2xl shadow-lg p-4">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-blue-600"></div>
-                  <h3 className="text-gray-900 font-semibold">Team 1</h3>
-                </div>
-              </div>
-              <div className="space-y-2">
-                {teamAPlayers.map((player) => (
-                  <div key={player.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                    <Avatar className="size-9 flex-shrink-0">
-                      <AvatarFallback className="bg-blue-500 text-white text-xs font-bold">
-                        {player.name.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <p className="text-sm text-gray-900 font-medium">{player.name}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge className={`${getSkillBadgeColor(player.skillLevel)} text-xs font-semibold flex-shrink-0`}>
-                        {player.skillLevel}
-                      </Badge>
-                      {player.ready && (
-                        <Badge className="bg-green-100 text-green-700 text-xs font-semibold flex-shrink-0">Ready</Badge>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Team 2 */}
-            <div className="bg-white rounded-2xl shadow-lg p-4">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-purple-600"></div>
-                  <h3 className="text-gray-900 font-semibold">Team 2</h3>
-                </div>
-              </div>
-              <div className="space-y-2">
-                {teamBPlayers.map((player) => (
-                  <div key={player.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-                    <Avatar className="size-9 flex-shrink-0">
-                      <AvatarFallback className="bg-purple-500 text-white text-xs font-bold">
-                        {player.name.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <p className="text-sm text-gray-900 font-medium">{player.name}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge className={`${getSkillBadgeColor(player.skillLevel)} text-xs font-semibold flex-shrink-0`}>
-                        {player.skillLevel}
-                      </Badge>
-                      {player.ready && (
-                        <Badge className="bg-green-100 text-green-700 text-xs font-semibold flex-shrink-0">Ready</Badge>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </ScrollArea>
-
-        {isHost && (
-          <div className="fixed bottom-6 left-6 right-6 max-w-[calc(100%-3rem)]">
-            <Button
-              onClick={handleFinishGame}
-              className="w-full rounded-2xl py-3 font-semibold text-white bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700"
-            >
-              Finish Game
-            </Button>
-          </div>
-        )}
       </div>
     );
   }
@@ -696,7 +734,7 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
 
             {isHost ? (
               <Button
-                onClick={handleStartGame}
+                onClick={() => setGameState('active')}
                 disabled={readyCount < players.length}
                 className="w-full rounded-2xl py-3 font-semibold text-white bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 flex items-center justify-center gap-2"
               >
@@ -706,13 +744,14 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
             ) : (
               <Button
                 onClick={handleReady}
+                disabled={userReady}
                 className={`w-full rounded-2xl py-3 font-semibold text-white ${
                   userReady
                     ? 'bg-gray-600 hover:bg-gray-700'
                     : 'bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700'
                 }`}
               >
-                {userReady ? 'Not Ready' : "I'm Ready!"}
+                {userReady ? '✓ Ready' : "I'm Ready!"}
               </Button>
             )}
 
