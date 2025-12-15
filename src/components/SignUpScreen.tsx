@@ -45,6 +45,10 @@ export function SignUpScreen({ onSignUp, onBack }: SignUpScreenProps) {
       alert('Passwords do not match!');
       return;
     }
+    if (!idUploaded) {
+      alert('Please upload a valid ID to continue');
+      return;
+    }
     onSignUp({ ...formData, isVerified: idUploaded });
   };
 
@@ -220,13 +224,16 @@ export function SignUpScreen({ onSignUp, onBack }: SignUpScreenProps) {
             </div>
 
             <div className="space-y-3 pt-2">
-              <Label className="text-gray-700">ID Verification (Optional)</Label>
-              <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center bg-gray-50">
+              <div className="flex items-center gap-2">
+                <Label className="text-gray-700">ID Verification</Label>
+                <span className="text-red-500 text-sm font-semibold">*Required</span>
+              </div>
+              <div className={`border-2 ${idUploaded ? 'border-green-300 bg-green-50' : 'border-dashed border-gray-300 bg-gray-50'} rounded-xl p-6 text-center`}>
                 {!idUploaded ? (
                   <>
                     <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                     <p className="text-sm text-gray-600 mb-1">Upload valid ID</p>
-                    <p className="text-xs text-gray-500">Get verified to create games</p>
+                    <p className="text-xs text-gray-500">Required to create and join games</p>
                     <Button
                       type="button"
                       onClick={() => setIdUploaded(true)}
@@ -239,7 +246,7 @@ export function SignUpScreen({ onSignUp, onBack }: SignUpScreenProps) {
                 ) : (
                   <div className="flex items-center justify-center gap-2 text-green-600">
                     <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">✓</div>
-                    <span className="text-sm">ID Uploaded</span>
+                    <span className="text-sm font-semibold">ID Verified</span>
                   </div>
                 )}
               </div>
@@ -281,7 +288,7 @@ export function SignUpScreen({ onSignUp, onBack }: SignUpScreenProps) {
                         </section>
                         <section>
                           <h3 className="text-gray-900 mb-2">4. Verification</h3>
-                          <p className="text-gray-600">ID verification is optional but recommended. Verified users can create games and are trusted by the community.</p>
+                          <p className="text-gray-600">ID verification is required to create and join games. Verified users are trusted by the community.</p>
                         </section>
                         <section>
                           <h3 className="text-gray-900 mb-2">5. Privacy Policy</h3>
@@ -302,7 +309,7 @@ export function SignUpScreen({ onSignUp, onBack }: SignUpScreenProps) {
             <Button
               type="submit"
               className="w-full h-14 bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 rounded-2xl shadow-lg shadow-blue-500/30 mt-6"
-              disabled={!formData.agreedToTerms}
+              disabled={!formData.agreedToTerms || !idUploaded}
             >
               Create Account
             </Button>
