@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, MapPin, Clock, Users, CheckCircle2, Zap } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, Users, CheckCircle2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { ScrollArea } from './ui/scroll-area';
@@ -78,13 +78,25 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
   };
 
   const handleReady = () => {
-    setUserReady(!userReady);
     if (!userReady) {
-      toast.success('You are ready! Waiting for others...');
+      // User is marking themselves as ready
+      setUserReady(true);
       setReadyCount(prev => prev + 1);
+      toast.success('You are ready! Game will start when all players are ready...');
+      
+      // Check if all players are now ready (including this one)
+      const newReadyCount = readyCount + 1;
+      if (newReadyCount === players.length) {
+        // Simulate game start
+        setTimeout(() => {
+          toast.success('All players ready! Game starting...');
+        }, 500);
+      }
     } else {
-      toast.info('You are no longer ready');
+      // User is marking themselves as not ready
+      setUserReady(false);
       setReadyCount(prev => Math.max(0, prev - 1));
+      toast.info('You are no longer ready');
     }
   };
 
@@ -95,10 +107,6 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
     }
     setUserTeam(userTeam === 1 ? 2 : 1);
     toast.success(`Switched to Team ${userTeam === 1 ? 2 : 1}`);
-  };
-
-  const handleSimulateGame = () => {
-    toast.success('Game simulation started!');
   };
 
   const teamAPlayers = players.filter(p => p.team === 1);
@@ -183,17 +191,6 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
               </div>
             </div>
           </div>
-
-          {/* Quick Simulate Button */}
-          <Button
-            onClick={handleSimulateGame}
-            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-2xl font-semibold py-3 flex items-center justify-center gap-2"
-          >
-            <Zap className="w-5 h-5" />
-            Quick Simulate Game
-          </Button>
-
-          <p className="text-center text-gray-500 text-xs">or manually play:</p>
 
           {/* Action Buttons */}
           <div className="space-y-3">
