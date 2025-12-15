@@ -26,7 +26,6 @@ import { PostGameSummaryScreen } from './components/PostGameSummaryScreen';
 import { ParticipantFeedbackScreen } from './components/ParticipantFeedbackScreen';
 import { BottomNavigation } from './components/BottomNavigation';
 import { Toaster, toast } from 'sonner';
-import { ActiveGameScreen } from './components/ActiveGameScreen';
 
 type AppScreen = 
   | 'splash'
@@ -38,7 +37,6 @@ type AppScreen =
   | 'chat'
   | 'create'
   | 'queue'
-  | 'active-game'
   | 'teams'
   | 'profile'
   | 'history'
