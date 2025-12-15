@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MapPin, Calendar, Users, Trophy, Clock, Upload, X, AlertCircle } from 'lucide-react';
+import { MapPin, Calendar, Users, Trophy, Clock, Upload, X, AlertCircle, Check } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -44,7 +44,7 @@ export function CreateGameScreen({
     title: '',
     description: '',
     sport: '',
-    skillLevel: '',
+    skillLevels: [] as string[],
     location: '',
     date: '',
     time: '',
@@ -56,20 +56,31 @@ export function CreateGameScreen({
   const [showLocationDialog, setShowLocationDialog] = useState(false);
   const [pendingFormData, setPendingFormData] = useState<any>(null);
   const [selectedPin, setSelectedPin] = useState({ x: 50, y: 50 });
-  const [mapPins, setMapPins] = useState<Array<{ x: number; y: number; id: string }>>([
-    { x: 25, y: 30, id: 'pin-1' },
-    { x: 65, y: 45, id: 'pin-2' },
-    { x: 40, y: 70, id: 'pin-3' },
-  ]);
+  const [mapPins, setMapPins] = useState<Array<{ x: number; y: number; id: string }>>([]);
 
   const DAILY_LIMIT = 2;
   const WEEKLY_LIMIT = 10;
+
+  const toggleSkillLevel = (level: string) => {
+    setFormData(prev => ({
+      ...prev,
+      skillLevels: prev.skillLevels.includes(level)
+        ? prev.skillLevels.filter(l => l !== level)
+        : [...prev.skillLevels, level]
+    }));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!isVerified) {
       setShowVerificationDialog(true);
+      return;
+    }
+
+    // Validate skill levels selection
+    if (formData.skillLevels.length === 0) {
+      toast.error('Please select at least one skill level');
       return;
     }
 
@@ -97,6 +108,13 @@ export function CreateGameScreen({
       onCreateGame(pendingFormData);
     }
     setPendingFormData(null);
+  };
+
+  const getSkillLevelLabel = (selected: string[]) => {
+    if (selected.length === 0) return 'Select skill levels';
+    if (selected.length === 3) return 'All Levels';
+    if (selected.length === 1) return selected[0];
+    return `${selected.length} Levels`;
   };
 
   return (
@@ -188,23 +206,49 @@ export function CreateGameScreen({
             </div>
 
             <div className="space-y-2">
-              <Label className="text-gray-700">Skill Level</Label>
+              <Label className="text-gray-700 flex items-center justify-between">
+                <span>Skill Levels</span>
+                <span className="text-xs font-normal text-gray-500">{formData.skillLevels.length} selected</span>
+              </Label>
+              <p className="text-xs text-gray-600 mb-3">Select one or more skill levels this game is for:</p>
               <div className="grid grid-cols-3 gap-2">
-                {skillLevels.map((level) => (
-                  <button
-                    key={level}
-                    type="button"
-                    onClick={() => setFormData({ ...formData, skillLevel: level })}
-                    className={`py-3 rounded-xl border-2 transition-all text-center ${
-                      formData.skillLevel === level
-                        ? 'border-blue-600 bg-blue-50 text-blue-700'
-                        : 'border-gray-200 text-gray-700 hover:border-gray-300'
-                    }`}
-                  >
-                    {level}
-                  </button>
-                ))}
+                {skillLevels.map((level) => {
+                  const isSelected = formData.skillLevels.includes(level);
+                  return (
+                    <button
+                      key={level}
+                      type="button"
+                      onClick={() => toggleSkillLevel(level)}
+                      className={`py-3 rounded-xl border-2 transition-all text-center font-semibold relative ${
+                        isSelected
+                          ? 'border-blue-600 bg-blue-50 text-blue-700'
+                          : 'border-gray-200 text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      {level}
+                      {isSelected && (
+                        <Check className="w-4 h-4 absolute top-1 right-1 text-blue-600" />
+                      )}
+                    </button>
+                  );
+                })}
               </div>
+              {formData.skillLevels.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-3">
+                  {formData.skillLevels.map((level) => (
+                    <Badge key={level} className="bg-blue-100 text-blue-700 flex items-center gap-1">
+                      {level}
+                      <button
+                        type="button"
+                        onClick={() => toggleSkillLevel(level)}
+                        className="ml-1 hover:text-blue-900"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -285,7 +329,8 @@ export function CreateGameScreen({
             <div className="pt-4 space-y-3">
               <Button
                 type="submit"
-                className="w-full h-14 bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 rounded-2xl shadow-lg shadow-blue-500/30"
+                className="w-full h-14 bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 rounded-2xl shadow-lg shadow-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={formData.skillLevels.length === 0}
               >
                 Create Game
               </Button>
