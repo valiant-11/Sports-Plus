@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, MapPin, Clock, Users, CheckCircle2, Play, X, Trophy, Star, Flag, AlertCircle, Map } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, Users, CheckCircle2, Play, X, Trophy, Star, Flag, AlertCircle, Map, UserMinus, UserPlus, Send } from 'lucide-react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { ScrollArea } from './ui/scroll-area';
@@ -12,6 +12,7 @@ interface QueueScreenProps {
   onBack: () => void;
   onLeaveGame?: (gameId: string) => void;
   onFinishGame?: (gameId: string, gameTitle: string, organizer: any) => void;
+  onGameComplete?: () => void;
   gameData?: {
     id: string;
     title: string;
@@ -37,6 +38,14 @@ interface Player {
   skillLevel?: 'Casual' | 'Novice' | 'Elite';
 }
 
+interface TeamMember {
+  id: string;
+  name: string;
+  avatar: string;
+  skillLevel: 'Casual' | 'Novice' | 'Elite';
+  online: boolean;
+}
+
 type GameState = 'waiting' | 'active' | 'vote-score' | 'rescore' | 'revote-score' | 'rating' | 'completed';
 
 const skillLevels: ('Casual' | 'Novice' | 'Elite')[] = ['Casual', 'Novice', 'Elite'];
@@ -51,7 +60,15 @@ const reportReasonsArray = [
   'Other'
 ];
 
-export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: QueueScreenProps) {
+// Mock team members
+const mockTeamMembers: TeamMember[] = [
+  { id: 'tm1', name: 'Sarah Chen', avatar: '', skillLevel: 'Elite', online: true },
+  { id: 'tm2', name: 'Mike Rodriguez', avatar: '', skillLevel: 'Novice', online: true },
+  { id: 'tm3', name: 'Emily Davis', avatar: '', skillLevel: 'Elite', online: false },
+  { id: 'tm4', name: 'James Wilson', avatar: '', skillLevel: 'Casual', online: true },
+];
+
+export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onGameComplete }: QueueScreenProps) {
   const [selectedPlayer, setSelectedPlayer] = useState<any>(null);
   const [players, setPlayers] = useState<Player[]>([]);
   const [userReady, setUserReady] = useState(false);
@@ -71,6 +88,8 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
   const [hasUserVoted, setHasUserVoted] = useState(false);
   const [userVote, setUserVote] = useState<'approve' | 'disagree' | null>(null);
   const [showMapModal, setShowMapModal] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [kickingPlayerId, setKickingPlayerId] = useState<string | null>(null);
 
   useEffect(() => {
     if (gameData) {
@@ -158,6 +177,27 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
     }
   };
 
+  const handleKickPlayer = (playerId: string, playerName: string) => {
+    setKickingPlayerId(playerId);
+    setTimeout(() => {
+      setPlayers(prev => prev.filter(p => p.id !== playerId));
+      setReadyCount(prev => {
+        const player = players.find(p => p.id === playerId);
+        return player?.ready ? Math.max(0, prev - 1) : prev;
+      });
+      toast.success(`${playerName} has been kicked from the game`);
+      setKickingPlayerId(null);
+    }, 500);
+  };
+
+  const handleInviteTeamMember = (member: TeamMember) => {
+    if (!member.online) {
+      toast.error(`${member.name} is offline`);
+      return;
+    }
+    toast.success(`Invitation sent to ${member.name}!`);
+  };
+
   const handleVoteScore = (vote: 'approve' | 'disagree') => {
     setUserVote(vote);
     setHasUserVoted(true);
@@ -243,6 +283,8 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
   };
 
   const handleReturnToMenu = () => {
+    // Clear game and return to home
+    onGameComplete?.();
     onBack();
   };
 
@@ -283,12 +325,8 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
   const gameLat = gameData?.latitude || 37.7749;
   const gameLng = gameData?.longitude || -122.4194;
 
-  // VOTE SCORE SCREEN (First vote - majority disagree)
+  // VOTE SCORE SCREEN
   if (gameState === 'vote-score') {
-    const totalVotes = votesApproved + votesDisapproved;
-    const disagreeExpected = Math.ceil(players.length * 0.7);
-    const voteProgress = Math.min(totalVotes, disagreeExpected);
-
     return (
       <div className="h-screen w-full max-w-md mx-auto bg-gray-50 flex flex-col">
         <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-green-600 pt-8 pb-8 px-6 rounded-b-3xl">
@@ -348,7 +386,7 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
     );
   }
 
-  // RESCORE SCREEN (User enters correct score)
+  // RESCORE SCREEN
   if (gameState === 'rescore') {
     return (
       <div className="h-screen w-full max-w-md mx-auto bg-gray-50 flex flex-col">
@@ -413,7 +451,7 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
     );
   }
 
-  // REVOTE SCORE SCREEN (Second vote - majority agrees)
+  // REVOTE SCORE SCREEN
   if (gameState === 'revote-score') {
     return (
       <div className="h-screen w-full max-w-md mx-auto bg-gray-50 flex flex-col">
@@ -639,7 +677,7 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
               onClick={handleReturnToMenu}
               className="w-full rounded-2xl py-3 font-semibold text-white bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700"
             >
-              Return to Menu
+              Return to Home
             </Button>
           </div>
         </div>
@@ -647,7 +685,7 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
     );
   }
 
-  // WAITING SCREEN (original)
+  // WAITING SCREEN
   if (!gameData) {
     return (
       <div className="h-screen w-full max-w-md mx-auto bg-gray-50 flex flex-col pb-20">
@@ -738,14 +776,24 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
 
           {/* Action Buttons */}
           <div className="space-y-3">
-            <Button
-              onClick={() => setShowMapModal(true)}
-              variant="outline"
-              className="w-full rounded-2xl py-3 font-semibold border-green-300 text-green-700 hover:bg-green-50 flex items-center justify-center gap-2"
-            >
-              <Map className="w-5 h-5" />
-              View Location on Map
-            </Button>
+            <div className="grid grid-cols-2 gap-3">
+              <Button
+                onClick={() => setShowMapModal(true)}
+                variant="outline"
+                className="rounded-2xl py-3 font-semibold border-green-300 text-green-700 hover:bg-green-50 flex items-center justify-center gap-2"
+              >
+                <Map className="w-5 h-5" />
+                Location
+              </Button>
+              <Button
+                onClick={() => setShowInviteModal(true)}
+                variant="outline"
+                className="rounded-2xl py-3 font-semibold border-blue-300 text-blue-700 hover:bg-blue-50 flex items-center justify-center gap-2"
+              >
+                <UserPlus className="w-5 h-5" />
+                Invite
+              </Button>
+            </div>
 
             {!isHost && (
               <Button
@@ -760,7 +808,7 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
 
             {isHost ? (
               <Button
-                onClick={() => setGameState('active')}
+                onClick={() => setGameState('vote-score')}
                 disabled={readyCount < players.length}
                 className="w-full rounded-2xl py-3 font-semibold text-white bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 flex items-center justify-center gap-2"
               >
@@ -800,42 +848,46 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
             </div>
             <div className="space-y-2">
               {teamAPlayers.map((player) => (
-                <button
+                <div
                   key={player.id}
-                  onClick={() => {
-                    if (!player.isCurrentUser) {
-                      setSelectedPlayer({
-                        name: player.name,
-                        username: player.name.toLowerCase().replace(' ', '_'),
-                        userId: `SP2025-${1000 + parseInt(player.id.replace('player-', '') || '0')}`,
-                        isVerified: player.verified,
-                        rating: 4.5,
-                        gamesPlayed: 20,
-                        reliabilityScore: 88,
-                      });
-                    }
-                  }}
-                  disabled={player.isCurrentUser}
-                  className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors text-left ${
+                  className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors ${
                     player.isCurrentUser
                       ? 'bg-blue-50 border border-blue-200'
-                      : 'bg-gray-50 hover:bg-gray-100 cursor-pointer'
-                  }`}
+                      : 'bg-gray-50'
+                  } ${kickingPlayerId === player.id ? 'opacity-50' : ''}`}
                 >
-                  <Avatar className="size-9 flex-shrink-0">
-                    <AvatarFallback className="bg-gradient-to-br from-blue-500 to-green-500 text-white text-xs font-semibold">
-                      {player.name.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-sm text-gray-900 font-medium truncate">{player.name}</p>
-                      {player.verified && <CheckCircle2 className="w-3 h-3 text-blue-600 flex-shrink-0" />}
+                  <button
+                    onClick={() => {
+                      if (!player.isCurrentUser) {
+                        setSelectedPlayer({
+                          name: player.name,
+                          username: player.name.toLowerCase().replace(' ', '_'),
+                          userId: `SP2025-${1000 + parseInt(player.id.replace('player-', '') || '0')}`,
+                          isVerified: player.verified,
+                          rating: 4.5,
+                          gamesPlayed: 20,
+                          reliabilityScore: 88,
+                        });
+                      }
+                    }}
+                    disabled={player.isCurrentUser}
+                    className="flex items-center gap-3 flex-1 text-left"
+                  >
+                    <Avatar className="size-9 flex-shrink-0">
+                      <AvatarFallback className="bg-gradient-to-br from-blue-500 to-green-500 text-white text-xs font-semibold">
+                        {player.name.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-sm text-gray-900 font-medium truncate">{player.name}</p>
+                        {player.verified && <CheckCircle2 className="w-3 h-3 text-blue-600 flex-shrink-0" />}
+                      </div>
+                      <Badge className={`${getSkillBadgeColor(player.skillLevel)} text-xs font-semibold mt-1`}>
+                        {player.skillLevel}
+                      </Badge>
                     </div>
-                    <Badge className={`${getSkillBadgeColor(player.skillLevel)} text-xs font-semibold mt-1`}>
-                      {player.skillLevel}
-                    </Badge>
-                  </div>
+                  </button>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     {player.isCurrentUser ? (
                       <Badge className="bg-blue-600 text-white text-xs">You</Badge>
@@ -844,8 +896,17 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
                     ) : (
                       <Badge className="bg-gray-100 text-gray-600 text-xs font-semibold">Waiting</Badge>
                     )}
+                    {isHost && !player.isCurrentUser && (
+                      <button
+                        onClick={() => handleKickPlayer(player.id, player.name)}
+                        disabled={kickingPlayerId === player.id}
+                        className="p-1.5 hover:bg-red-100 rounded-lg transition-colors text-red-600 disabled:opacity-50"
+                      >
+                        <UserMinus className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
-                </button>
+                </div>
               ))}
             </div>
           </div>
@@ -861,42 +922,46 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
             </div>
             <div className="space-y-2">
               {teamBPlayers.map((player) => (
-                <button
+                <div
                   key={player.id}
-                  onClick={() => {
-                    if (!player.isCurrentUser) {
-                      setSelectedPlayer({
-                        name: player.name,
-                        username: player.name.toLowerCase().replace(' ', '_'),
-                        userId: `SP2025-${1000 + parseInt(player.id.replace('player-', '') || '0')}`,
-                        isVerified: player.verified,
-                        rating: 4.5,
-                        gamesPlayed: 20,
-                        reliabilityScore: 88,
-                      });
-                    }
-                  }}
-                  disabled={player.isCurrentUser}
-                  className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors text-left ${
+                  className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors ${
                     player.isCurrentUser
                       ? 'bg-blue-50 border border-blue-200'
-                      : 'bg-gray-50 hover:bg-gray-100 cursor-pointer'
-                  }`}
+                      : 'bg-gray-50'
+                  } ${kickingPlayerId === player.id ? 'opacity-50' : ''}`}
                 >
-                  <Avatar className="size-9 flex-shrink-0">
-                    <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white text-xs font-semibold">
-                      {player.name.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-sm text-gray-900 font-medium truncate">{player.name}</p>
-                      {player.verified && <CheckCircle2 className="w-3 h-3 text-blue-600 flex-shrink-0" />}
+                  <button
+                    onClick={() => {
+                      if (!player.isCurrentUser) {
+                        setSelectedPlayer({
+                          name: player.name,
+                          username: player.name.toLowerCase().replace(' ', '_'),
+                          userId: `SP2025-${1000 + parseInt(player.id.replace('player-', '') || '0')}`,
+                          isVerified: player.verified,
+                          rating: 4.5,
+                          gamesPlayed: 20,
+                          reliabilityScore: 88,
+                        });
+                      }
+                    }}
+                    disabled={player.isCurrentUser}
+                    className="flex items-center gap-3 flex-1 text-left"
+                  >
+                    <Avatar className="size-9 flex-shrink-0">
+                      <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white text-xs font-semibold">
+                        {player.name.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-sm text-gray-900 font-medium truncate">{player.name}</p>
+                        {player.verified && <CheckCircle2 className="w-3 h-3 text-blue-600 flex-shrink-0" />}
+                      </div>
+                      <Badge className={`${getSkillBadgeColor(player.skillLevel)} text-xs font-semibold mt-1`}>
+                        {player.skillLevel}
+                      </Badge>
                     </div>
-                    <Badge className={`${getSkillBadgeColor(player.skillLevel)} text-xs font-semibold mt-1`}>
-                      {player.skillLevel}
-                    </Badge>
-                  </div>
+                  </button>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     {player.isCurrentUser ? (
                       <Badge className="bg-blue-600 text-white text-xs">You</Badge>
@@ -905,8 +970,17 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
                     ) : (
                       <Badge className="bg-gray-100 text-gray-600 text-xs font-semibold">Waiting</Badge>
                     )}
+                    {isHost && !player.isCurrentUser && (
+                      <button
+                        onClick={() => handleKickPlayer(player.id, player.name)}
+                        disabled={kickingPlayerId === player.id}
+                        className="p-1.5 hover:bg-red-100 rounded-lg transition-colors text-red-600 disabled:opacity-50"
+                      >
+                        <UserMinus className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
-                </button>
+                </div>
               ))}
             </div>
           </div>
@@ -945,6 +1019,66 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
               >
                 Open in Google Maps
               </a>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Invite Team Members Modal */}
+      {showInviteModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-end max-w-md mx-auto z-50">
+          <div className="bg-white w-full rounded-t-3xl shadow-2xl animate-in slide-in-from-bottom max-h-[85vh] flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b">
+              <div>
+                <h3 className="text-gray-900 font-bold text-lg">Invite Team Members</h3>
+                <p className="text-sm text-gray-600 mt-1">Send invites to your team</p>
+              </div>
+              <button onClick={() => setShowInviteModal(false)} className="text-gray-500 hover:text-gray-700">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <ScrollArea className="flex-1 px-6 py-4">
+              <div className="space-y-2">
+                {mockTeamMembers.map((member) => (
+                  <div
+                    key={member.id}
+                    className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors"
+                  >
+                    <Avatar className="size-10 flex-shrink-0">
+                      <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-500 text-white text-sm font-semibold">
+                        {member.name.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm text-gray-900 font-medium truncate">{member.name}</p>
+                        {member.online && (
+                          <div className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" />
+                        )}
+                      </div>
+                      <Badge className={`${getSkillBadgeColor(member.skillLevel)} text-xs font-semibold mt-1`}>
+                        {member.skillLevel}
+                      </Badge>
+                    </div>
+                    <button
+                      onClick={() => handleInviteTeamMember(member)}
+                      disabled={!member.online}
+                      className="p-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+                    >
+                      <Send className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+            <div className="p-6 border-t">
+              <Button
+                onClick={() => setShowInviteModal(false)}
+                variant="outline"
+                className="w-full rounded-2xl py-3 font-semibold"
+              >
+                Done
+              </Button>
             </div>
           </div>
         </div>
