@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, MapPin, Clock, Users, CheckCircle2, Play, X, Trophy, Star, Flag, AlertCircle } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, Users, CheckCircle2, Play, X, Trophy, Star, Flag, AlertCircle, Map } from 'lucide-react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { ScrollArea } from './ui/scroll-area';
@@ -20,6 +20,8 @@ interface QueueScreenProps {
     date: string;
     time: string;
     maxPlayers: number;
+    latitude?: number;
+    longitude?: number;
   };
   isHost?: boolean;
 }
@@ -68,6 +70,7 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
   const [reportComment, setReportComment] = useState('');
   const [hasUserVoted, setHasUserVoted] = useState(false);
   const [userVote, setUserVote] = useState<'approve' | 'disagree' | null>(null);
+  const [showMapModal, setShowMapModal] = useState(false);
 
   useEffect(() => {
     if (gameData) {
@@ -75,22 +78,9 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
     }
   }, [gameData?.maxPlayers]);
 
-  // Auto-join and start game flow
+  // Auto-ready all other players and start game ONLY after user clicks ready
   useEffect(() => {
-    if (!isHost && gameState === 'waiting' && players.length > 0 && !userReady) {
-      // Simulate auto-readying user after joining
-      const timer = setTimeout(() => {
-        setUserReady(true);
-        setReadyCount(prev => prev + 1);
-        toast.success('You joined! You are ready!');
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [isHost, gameState, players, userReady]);
-
-  // Auto-ready all other players and start game
-  useEffect(() => {
-    if (gameState === 'waiting' && players.length > 0 && readyCount > 0 && readyCount < players.length) {
+    if (gameState === 'waiting' && players.length > 0 && userReady && readyCount < players.length) {
       const timer = setTimeout(() => {
         // Auto-ready remaining players
         const updatedPlayers = players.map(p => ({ ...p, ready: true }));
@@ -106,10 +96,10 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
           toast.success('Game finished! Voting on final score...');
         }, 2000);
         return () => clearTimeout(startTimer);
-      }, 4000);
+      }, 3000);
       return () => clearTimeout(timer);
     }
-  }, [gameState, players, readyCount]);
+  }, [gameState, players, readyCount, userReady]);
 
   const initializePlayers = () => {
     if (!gameData) return;
@@ -153,10 +143,17 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
     if (!userReady) {
       setUserReady(true);
       setReadyCount(prev => prev + 1);
+      // Update current user's ready status
+      setPlayers(prev => prev.map(p => 
+        p.isCurrentUser ? { ...p, ready: true } : p
+      ));
       toast.success('You are ready! Waiting for others...');
     } else {
       setUserReady(false);
       setReadyCount(prev => Math.max(0, prev - 1));
+      setPlayers(prev => prev.map(p => 
+        p.isCurrentUser ? { ...p, ready: false } : p
+      ));
       toast.info('You are no longer ready');
     }
   };
@@ -281,6 +278,10 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
 
   const teamAPlayers = players.filter(p => p.team === 1);
   const teamBPlayers = players.filter(p => p.team === 2);
+
+  // Default coordinates (example: San Francisco)
+  const gameLat = gameData?.latitude || 37.7749;
+  const gameLng = gameData?.longitude || -122.4194;
 
   // VOTE SCORE SCREEN (First vote - majority disagree)
   if (gameState === 'vote-score') {
@@ -698,17 +699,20 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
         <div className="bg-white/15 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 text-white/90">
+              <button 
+                onClick={() => setShowMapModal(true)}
+                className="flex items-center gap-2 text-white/90 hover:text-white transition-colors"
+              >
                 <MapPin className="w-4 h-4" />
                 <span className="text-sm">{gameData.location}</span>
-              </div>
+              </button>
               <div className="flex items-center gap-2 text-white/90">
                 <Clock className="w-4 h-4" />
                 <span className="text-sm">{gameData.time}</span>
               </div>
             </div>
             <Badge className="bg-yellow-400 text-yellow-900 font-semibold text-xs px-3 py-1">
-              Waiting for Players
+              {readyCount}/{players.length} Ready
             </Badge>
           </div>
         </div>
@@ -726,7 +730,7 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
                 </svg>
               </div>
               <div>
-                <p className="text-gray-900 font-medium text-sm">Waiting for all players to be ready</p>
+                <p className="text-gray-900 font-medium text-sm">Click 'I'm Ready!' when you're prepared to play</p>
                 <p className="text-blue-600 text-xs mt-1 font-semibold">{readyCount}/{players.length} players ready</p>
               </div>
             </div>
@@ -734,6 +738,15 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
 
           {/* Action Buttons */}
           <div className="space-y-3">
+            <Button
+              onClick={() => setShowMapModal(true)}
+              variant="outline"
+              className="w-full rounded-2xl py-3 font-semibold border-green-300 text-green-700 hover:bg-green-50 flex items-center justify-center gap-2"
+            >
+              <Map className="w-5 h-5" />
+              View Location on Map
+            </Button>
+
             {!isHost && (
               <Button
                 onClick={handleSwitchTeam}
@@ -757,14 +770,13 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
             ) : (
               <Button
                 onClick={handleReady}
-                disabled={userReady}
                 className={`w-full rounded-2xl py-3 font-semibold text-white ${
                   userReady
-                    ? 'bg-gray-600 hover:bg-gray-700'
+                    ? 'bg-green-600 hover:bg-green-700'
                     : 'bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700'
                 }`}
               >
-                {userReady ? '✓ Ready' : "I'm Ready!"}
+                {userReady ? '✓ Ready - Waiting for others' : "I'm Ready!"}
               </Button>
             )}
 
@@ -829,7 +841,9 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
                       <Badge className="bg-blue-600 text-white text-xs">You</Badge>
                     ) : player.ready ? (
                       <Badge className="bg-green-100 text-green-700 text-xs font-semibold">Ready</Badge>
-                    ) : null}
+                    ) : (
+                      <Badge className="bg-gray-100 text-gray-600 text-xs font-semibold">Waiting</Badge>
+                    )}
                   </div>
                 </button>
               ))}
@@ -888,7 +902,9 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
                       <Badge className="bg-blue-600 text-white text-xs">You</Badge>
                     ) : player.ready ? (
                       <Badge className="bg-green-100 text-green-700 text-xs font-semibold">Ready</Badge>
-                    ) : null}
+                    ) : (
+                      <Badge className="bg-gray-100 text-gray-600 text-xs font-semibold">Waiting</Badge>
+                    )}
                   </div>
                 </button>
               ))}
@@ -896,6 +912,43 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
           </div>
         </div>
       </ScrollArea>
+
+      {/* Map Modal */}
+      {showMapModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-end max-w-md mx-auto z-50">
+          <div className="bg-white w-full rounded-t-3xl shadow-2xl animate-in slide-in-from-bottom max-h-[85vh] flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b">
+              <div>
+                <h3 className="text-gray-900 font-bold text-lg">Game Location</h3>
+                <p className="text-sm text-gray-600 mt-1">{gameData.location}</p>
+              </div>
+              <button onClick={() => setShowMapModal(false)} className="text-gray-500 hover:text-gray-700">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <div className="flex-1 relative overflow-hidden">
+              <iframe
+                width="100%"
+                height="100%"
+                frameBorder="0"
+                style={{ border: 0 }}
+                src={`https://www.openstreetmap.org/export/embed.html?bbox=${gameLng - 0.01},${gameLat - 0.01},${gameLng + 0.01},${gameLat + 0.01}&layer=mapnik&marker=${gameLat},${gameLng}`}
+                allowFullScreen
+              />
+            </div>
+            <div className="p-6 border-t">
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${gameLat},${gameLng}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full block text-center bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 text-white py-3 rounded-2xl font-semibold transition-colors"
+              >
+                Open in Google Maps
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Mini Profile */}
       {selectedPlayer && (
