@@ -189,8 +189,9 @@ export default function App() {
       setSelectedGameId(gameId);
       
       toast.success('Joined game successfully!');
-      // Navigate to active game screen
-      setCurrentScreen('active-game');
+      // Navigate to QUEUE screen (same as clicking Queue button)
+      setCurrentScreen('queue');
+      setActiveTab('create');
     }
   };
 
@@ -212,7 +213,7 @@ export default function App() {
       gamesCreatedThisWeek: prev.gamesCreatedThisWeek + 1,
     }));
     
-    // Store created game data and navigate to active game
+    // Store created game data and navigate to QUEUE screen
     setCreatedGameData({
       id: newGameId,
       title: gameData.title,
@@ -224,7 +225,8 @@ export default function App() {
     });
     setSelectedGameId(newGameId);
     setHasCreatedGame(true);
-    setCurrentScreen('active-game');
+    setCurrentScreen('queue');
+    setActiveTab('create');
     toast.success('Game created successfully! Get ready to play!');
   };
 
@@ -318,7 +320,6 @@ export default function App() {
     'chat',
     'create',
     'queue',
-    'active-game',
     'teams',
     'profile',
     'history',
@@ -378,7 +379,7 @@ export default function App() {
         />
       )}
 
-      {currentScreen === 'queue' && (
+      {currentScreen === 'queue' && createdGameData && (
         <QueueScreen 
           gameData={createdGameData}
           isHost={hasCreatedGame}
@@ -399,17 +400,6 @@ export default function App() {
             }
           }}
           onFinishGame={handleParticipantFinishGame}
-        />
-      )}
-
-      {currentScreen === 'active-game' && createdGameData && (
-        <ActiveGameScreen
-          gameData={createdGameData}
-          isHost={hasCreatedGame}
-          onBack={() => {
-            setCurrentScreen('home');
-            setActiveTab('home');
-          }}
         />
       )}
 
