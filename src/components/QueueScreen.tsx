@@ -32,9 +32,12 @@ interface Player {
   isCurrentUser: boolean;
   ready?: boolean;
   rating?: number;
+  skillLevel?: 'Casual' | 'Novice' | 'Elite';
 }
 
 type GameState = 'waiting' | 'active' | 'finish-score' | 'vote-score' | 'rating' | 'completed';
+
+const skillLevels: ('Casual' | 'Novice' | 'Elite')[] = ['Casual', 'Novice', 'Elite'];
 
 export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: QueueScreenProps) {
   const [selectedPlayer, setSelectedPlayer] = useState<any>(null);
@@ -90,10 +93,12 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
       team: 1,
       isCurrentUser: true,
       ready: false,
+      skillLevel: 'Elite',
     });
 
     for (let i = 1; i < gameData.maxPlayers; i++) {
       const team = (i % 2 === 0) ? 1 : 2;
+      const randomSkill = skillLevels[Math.floor(Math.random() * skillLevels.length)];
       newPlayers.push({
         id: `player-${i}`,
         name: aiPlayerNames[i - 1] || `Player ${i}`,
@@ -101,6 +106,7 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
         team: team,
         isCurrentUser: false,
         ready: false,
+        skillLevel: randomSkill,
       });
     }
 
@@ -200,6 +206,19 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
     toast.success(`Switched to Team ${userTeam === 1 ? 2 : 1}`);
   };
 
+  const getSkillBadgeColor = (skill?: string) => {
+    switch (skill) {
+      case 'Casual':
+        return 'bg-blue-100 text-blue-700';
+      case 'Novice':
+        return 'bg-purple-100 text-purple-700';
+      case 'Elite':
+        return 'bg-yellow-100 text-yellow-700';
+      default:
+        return 'bg-gray-100 text-gray-700';
+    }
+  };
+
   const teamAPlayers = players.filter(p => p.team === 1);
   const teamBPlayers = players.filter(p => p.team === 2);
 
@@ -294,7 +313,7 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
                   <Badge
                     key={player.id}
                     className={`px-3 py-1.5 text-xs font-semibold ${
-n                      index < votesApproved
+                      index < votesApproved
                         ? 'bg-green-100 text-green-700'
                         : 'bg-gray-100 text-gray-600'
                     }`}
@@ -335,6 +354,9 @@ n                      index < votesApproved
                 </AvatarFallback>
               </Avatar>
               <h2 className="text-gray-900 font-bold text-2xl mb-2">{currentPlayer.name}</h2>
+              <Badge className={`${getSkillBadgeColor(currentPlayer.skillLevel)} text-xs font-semibold px-2 py-1 inline-block mb-4`}>
+                {currentPlayer.skillLevel}
+              </Badge>
               <p className="text-gray-600 mb-6">How did they play?</p>
 
               <div className="flex justify-center gap-2 mb-8">
@@ -512,9 +534,14 @@ n                      index < votesApproved
                     <div className="flex-1">
                       <p className="text-sm text-gray-900 font-medium">{player.name}</p>
                     </div>
-                    {player.ready && (
-                      <Badge className="bg-green-100 text-green-700 text-xs font-semibold flex-shrink-0">Ready</Badge>
-                    )}
+                    <div className="flex items-center gap-2">
+                      <Badge className={`${getSkillBadgeColor(player.skillLevel)} text-xs font-semibold flex-shrink-0`}>
+                        {player.skillLevel}
+                      </Badge>
+                      {player.ready && (
+                        <Badge className="bg-green-100 text-green-700 text-xs font-semibold flex-shrink-0">Ready</Badge>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -539,9 +566,14 @@ n                      index < votesApproved
                     <div className="flex-1">
                       <p className="text-sm text-gray-900 font-medium">{player.name}</p>
                     </div>
-                    {player.ready && (
-                      <Badge className="bg-green-100 text-green-700 text-xs font-semibold flex-shrink-0">Ready</Badge>
-                    )}
+                    <div className="flex items-center gap-2">
+                      <Badge className={`${getSkillBadgeColor(player.skillLevel)} text-xs font-semibold flex-shrink-0`}>
+                        {player.skillLevel}
+                      </Badge>
+                      {player.ready && (
+                        <Badge className="bg-green-100 text-green-700 text-xs font-semibold flex-shrink-0">Ready</Badge>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -737,11 +769,16 @@ n                      index < votesApproved
                       {player.verified && <CheckCircle2 className="w-3 h-3 text-blue-600 flex-shrink-0" />}
                     </div>
                   </div>
-                  {player.isCurrentUser ? (
-                    <Badge className="bg-blue-600 text-white text-xs flex-shrink-0">You</Badge>
-                  ) : player.ready ? (
-                    <Badge className="bg-green-100 text-green-700 text-xs font-semibold flex-shrink-0">Ready</Badge>
-                  ) : null}
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <Badge className={`${getSkillBadgeColor(player.skillLevel)} text-xs font-semibold`}>
+                      {player.skillLevel}
+                    </Badge>
+                    {player.isCurrentUser ? (
+                      <Badge className="bg-blue-600 text-white text-xs">You</Badge>
+                    ) : player.ready ? (
+                      <Badge className="bg-green-100 text-green-700 text-xs font-semibold">Ready</Badge>
+                    ) : null}
+                  </div>
                 </button>
               ))}
             </div>
@@ -791,11 +828,16 @@ n                      index < votesApproved
                       {player.verified && <CheckCircle2 className="w-3 h-3 text-blue-600 flex-shrink-0" />}
                     </div>
                   </div>
-                  {player.isCurrentUser ? (
-                    <Badge className="bg-blue-600 text-white text-xs flex-shrink-0">You</Badge>
-                  ) : player.ready ? (
-                    <Badge className="bg-green-100 text-green-700 text-xs font-semibold flex-shrink-0">Ready</Badge>
-                  ) : null}
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <Badge className={`${getSkillBadgeColor(player.skillLevel)} text-xs font-semibold`}>
+                      {player.skillLevel}
+                    </Badge>
+                    {player.isCurrentUser ? (
+                      <Badge className="bg-blue-600 text-white text-xs">You</Badge>
+                    ) : player.ready ? (
+                      <Badge className="bg-green-100 text-green-700 text-xs font-semibold">Ready</Badge>
+                    ) : null}
+                  </div>
                 </button>
               ))}
             </div>
