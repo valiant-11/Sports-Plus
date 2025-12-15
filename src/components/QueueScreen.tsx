@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, MapPin, Clock, Users, CheckCircle2, Play, X, Trophy, Star } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, Users, CheckCircle2, Play, X, Trophy, Star, Flag, AlertCircle } from 'lucide-react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { ScrollArea } from './ui/scroll-area';
@@ -48,6 +48,9 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
   const [votesApproved, setVotesApproved] = useState(0);
   const [currentRatingIndex, setCurrentRatingIndex] = useState(0);
   const [playerRatings, setPlayerRatings] = useState<{ [key: string]: number }>({});
+  const [playerComments, setPlayerComments] = useState<{ [key: string]: string }>({});
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportReason, setReportReason] = useState('');
 
   useEffect(() => {
     if (gameData) {
@@ -149,12 +152,20 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
     }, 500);
   };
 
-  const handleRatePlayer = (rating: number) => {
+  const handleRatePlayer = () => {
     const currentPlayer = players[currentRatingIndex];
-    setPlayerRatings(prev => ({
-      ...prev,
-      [currentPlayer.id]: rating
-    }));
+    const rating = playerRatings[currentPlayer.id] || 0;
+    const comment = playerComments[currentPlayer.id] || '';
+
+    if (rating === 0) {
+      toast.error('Please select a rating');
+      return;
+    }
+    if (!comment.trim()) {
+      toast.error('Please add a comment');
+      return;
+    }
+
     toast.success(`Rated ${currentPlayer.name} - ${rating} stars`);
     
     if (currentRatingIndex < players.length - 1) {
@@ -164,6 +175,16 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
       setGameState('completed');
       toast.success('Game completed! Thanks for playing!');
     }
+  };
+
+  const handleSubmitReport = () => {
+    if (!reportReason.trim()) {
+      toast.error('Please provide a reason for the report');
+      return;
+    }
+    toast.success('Report submitted successfully');
+    setShowReportModal(false);
+    setReportReason('');
   };
 
   const handleReturnToMenu = () => {
@@ -273,7 +294,7 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
                   <Badge
                     key={player.id}
                     className={`px-3 py-1.5 text-xs font-semibold ${
-                      index < votesApproved
+n                      index < votesApproved
                         ? 'bg-green-100 text-green-700'
                         : 'bg-gray-100 text-gray-600'
                     }`}
@@ -295,6 +316,8 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
   if (gameState === 'rating') {
     const currentPlayer = players[currentRatingIndex];
     const ratedCount = Object.keys(playerRatings).length;
+    const currentRating = playerRatings[currentPlayer.id] || 0;
+    const currentComment = playerComments[currentPlayer.id] || '';
 
     return (
       <div className="h-screen w-full max-w-md mx-auto bg-gray-50 flex flex-col">
@@ -303,41 +326,118 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
           <p className="text-white/80 text-sm">Progress: {ratedCount}/{players.length}</p>
         </div>
 
-        <div className="flex-1 flex items-center justify-center px-6 py-8">
-          <div className="bg-white rounded-2xl shadow-lg p-8 w-full text-center">
-            <Avatar className="size-20 mx-auto mb-4">
-              <AvatarFallback className="bg-gradient-to-br from-blue-500 to-green-500 text-white text-2xl font-bold">
-                {currentPlayer.name.charAt(0)}
-              </AvatarFallback>
-            </Avatar>
-            <h2 className="text-gray-900 font-bold text-2xl mb-2">{currentPlayer.name}</h2>
-            <p className="text-gray-600 mb-8">How did they play?</p>
+        <ScrollArea className="flex-1 px-6 py-8">
+          <div className="pb-32">
+            <div className="bg-white rounded-2xl shadow-lg p-8 w-full text-center">
+              <Avatar className="size-20 mx-auto mb-4">
+                <AvatarFallback className="bg-gradient-to-br from-blue-500 to-green-500 text-white text-2xl font-bold">
+                  {currentPlayer.name.charAt(0)}
+                </AvatarFallback>
+              </Avatar>
+              <h2 className="text-gray-900 font-bold text-2xl mb-2">{currentPlayer.name}</h2>
+              <p className="text-gray-600 mb-6">How did they play?</p>
 
-            <div className="flex justify-center gap-2 mb-8">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button
-                  key={star}
-                  onClick={() => handleRatePlayer(star)}
-                  className="transition-transform hover:scale-110"
+              <div className="flex justify-center gap-2 mb-8">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    onClick={() => setPlayerRatings(prev => ({ ...prev, [currentPlayer.id]: star }))}
+                    className="transition-transform hover:scale-110"
+                  >
+                    <Star
+                      className={`w-10 h-10 ${
+                        star <= currentRating
+                          ? 'fill-yellow-400 text-yellow-400'
+                          : 'text-gray-300'
+                      }`}
+                    />
+                  </button>
+                ))}
+              </div>
+
+              <div className="mb-6 text-left">
+                <label className="text-sm text-gray-600 font-semibold mb-2 block">Add a comment (optional)</label>
+                <textarea
+                  value={currentComment}
+                  onChange={(e) => setPlayerComments(prev => ({ ...prev, [currentPlayer.id]: e.target.value }))}
+                  placeholder="Why did you give this rating? E.g., Great teamwork, Good defense, Could improve..."
+                  className="w-full rounded-xl p-3 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 resize-none h-24"
+                />
+              </div>
+
+              <div className="flex gap-3">
+                <Button
+                  onClick={() => {
+                    setPlayerRatings(prev => ({ ...prev, [currentPlayer.id]: 0 }));
+                    setPlayerComments(prev => ({ ...prev, [currentPlayer.id]: '' }));
+                  }}
+                  variant="outline"
+                  className="flex-1 rounded-2xl py-3 font-semibold border-gray-300"
                 >
-                  <Star
-                    className={`w-10 h-10 ${
-                      star <= (playerRatings[currentPlayer.id] || 0)
-                        ? 'fill-yellow-400 text-yellow-400'
-                        : 'text-gray-300'
-                    }`}
-                  />
-                </button>
-              ))}
-            </div>
+                  Clear
+                </Button>
+                <Button
+                  onClick={() => setShowReportModal(true)}
+                  variant="outline"
+                  className="flex-1 rounded-2xl py-3 font-semibold border-red-200 text-red-600 hover:bg-red-50 flex items-center justify-center gap-2"
+                >
+                  <Flag className="w-4 h-4" />
+                  Report
+                </Button>
+                <Button
+                  onClick={handleRatePlayer}
+                  className="flex-1 rounded-2xl py-3 font-semibold text-white bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700"
+                >
+                  Submit
+                </Button>
+              </div>
 
-            {currentRatingIndex < players.length - 1 && (
-              <p className="text-sm text-gray-500">
-                {players.length - currentRatingIndex - 1} more to rate
-              </p>
-            )}
+              {currentRatingIndex < players.length - 1 && (
+                <p className="text-sm text-gray-500 mt-4">
+                  {players.length - currentRatingIndex - 1} more to rate
+                </p>
+              )}
+            </div>
           </div>
-        </div>
+        </ScrollArea>
+
+        {/* Report Modal */}
+        {showReportModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-end max-w-md mx-auto z-50">
+            <div className="bg-white w-full rounded-t-3xl p-6 shadow-2xl animate-in slide-in-from-bottom">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-gray-900 font-bold text-lg">Report {currentPlayer.name}</h3>
+                <button onClick={() => setShowReportModal(false)} className="text-gray-500 hover:text-gray-700">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <textarea
+                value={reportReason}
+                onChange={(e) => setReportReason(e.target.value)}
+                placeholder="Tell us why you're reporting this player. E.g., Inappropriate behavior, Didn't show up, etc."
+                className="w-full rounded-xl p-3 border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-red-600 resize-none h-24 mb-4"
+              />
+
+              <div className="flex gap-3">
+                <Button
+                  onClick={() => setShowReportModal(false)}
+                  variant="outline"
+                  className="flex-1 rounded-2xl py-3 font-semibold border-gray-300"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSubmitReport}
+                  className="flex-1 rounded-2xl py-3 font-semibold text-white bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 flex items-center justify-center gap-2"
+                >
+                  <Flag className="w-4 h-4" />
+                  Submit Report
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -409,7 +509,12 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
                         {player.name.charAt(0)}
                       </AvatarFallback>
                     </Avatar>
-                    <p className="text-sm text-gray-900 font-medium">{player.name}</p>
+                    <div className="flex-1">
+                      <p className="text-sm text-gray-900 font-medium">{player.name}</p>
+                    </div>
+                    {player.ready && (
+                      <Badge className="bg-green-100 text-green-700 text-xs font-semibold flex-shrink-0">Ready</Badge>
+                    )}
                   </div>
                 ))}
               </div>
@@ -431,7 +536,12 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
                         {player.name.charAt(0)}
                       </AvatarFallback>
                     </Avatar>
-                    <p className="text-sm text-gray-900 font-medium">{player.name}</p>
+                    <div className="flex-1">
+                      <p className="text-sm text-gray-900 font-medium">{player.name}</p>
+                    </div>
+                    {player.ready && (
+                      <Badge className="bg-green-100 text-green-700 text-xs font-semibold flex-shrink-0">Ready</Badge>
+                    )}
                   </div>
                 ))}
               </div>
@@ -439,16 +549,16 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
           </div>
         </ScrollArea>
 
-        <div className="fixed bottom-6 left-6 right-6 max-w-[calc(100%-3rem)]">
-          {isHost && (
+        {isHost && (
+          <div className="fixed bottom-6 left-6 right-6 max-w-[calc(100%-3rem)]">
             <Button
               onClick={handleFinishGame}
               className="w-full rounded-2xl py-3 font-semibold text-white bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700"
             >
               Finish Game
             </Button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -627,9 +737,11 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
                       {player.verified && <CheckCircle2 className="w-3 h-3 text-blue-600 flex-shrink-0" />}
                     </div>
                   </div>
-                  {player.isCurrentUser && (
+                  {player.isCurrentUser ? (
                     <Badge className="bg-blue-600 text-white text-xs flex-shrink-0">You</Badge>
-                  )}
+                  ) : player.ready ? (
+                    <Badge className="bg-green-100 text-green-700 text-xs font-semibold flex-shrink-0">Ready</Badge>
+                  ) : null}
                 </button>
               ))}
             </div>
@@ -679,9 +791,11 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
                       {player.verified && <CheckCircle2 className="w-3 h-3 text-blue-600 flex-shrink-0" />}
                     </div>
                   </div>
-                  {player.isCurrentUser && (
+                  {player.isCurrentUser ? (
                     <Badge className="bg-blue-600 text-white text-xs flex-shrink-0">You</Badge>
-                  )}
+                  ) : player.ready ? (
+                    <Badge className="bg-green-100 text-green-700 text-xs font-semibold flex-shrink-0">Ready</Badge>
+                  ) : null}
                 </button>
               ))}
             </div>
