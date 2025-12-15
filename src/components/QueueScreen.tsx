@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, MapPin, Clock, Users, CheckCircle2, Play, X, Trophy, Star, Flag, AlertCircle, Map, UserMinus, UserPlus, Send } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, Users, CheckCircle2, Play, X, Trophy, Star, Flag, AlertCircle, Map, UserMinus, UserPlus, Send, MessageCircle } from 'lucide-react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { ScrollArea } from './ui/scroll-area';
@@ -46,6 +46,14 @@ interface TeamMember {
   online: boolean;
 }
 
+interface ChatMessage {
+  id: string;
+  playerId: string;
+  playerName: string;
+  message: string;
+  timestamp: number;
+}
+
 type GameState = 'waiting' | 'active' | 'vote-score' | 'rescore' | 'revote-score' | 'rating' | 'completed';
 
 const skillLevels: ('Casual' | 'Novice' | 'Elite')[] = ['Casual', 'Novice', 'Elite'];
@@ -90,8 +98,14 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
   const [showMapModal, setShowMapModal] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showLeaveConfirmModal, setShowLeaveConfirmModal] = useState(false);
+  const [showGroupChat, setShowGroupChat] = useState(false);
   const [kickingPlayerId, setKickingPlayerId] = useState<string | null>(null);
   const [invitedMembers, setInvitedMembers] = useState<Set<string>>(new Set());
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
+    { id: '1', playerId: 'player-1', playerName: 'Alex Chen', message: 'Hey! Are we meeting 10 mins early?', timestamp: Date.now() - 300000 },
+    { id: '2', playerId: 'player-2', playerName: 'Maria Santos', message: 'Sure, I\'ll be there by 5:45', timestamp: Date.now() - 240000 },
+  ]);
+  const [newMessage, setNewMessage] = useState('');
 
   useEffect(() => {
     if (gameData) {
@@ -209,12 +223,32 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
       setUserReady(false);
       setPlayers([]);
       setReadyCount(0);
+      setChatMessages([]);
       // Call the leave callback and then go back
       onLeaveGame?.(gameData.id);
       onGameComplete?.();
       onBack();
       toast.success('You have left the game');
     }
+  };
+
+  const handleSendMessage = () => {
+    if (!newMessage.trim()) {
+      toast.error('Message cannot be empty');
+      return;
+    }
+
+    const message: ChatMessage = {
+      id: Date.now().toString(),
+      playerId: 'current-user',
+      playerName: 'You',
+      message: newMessage.trim(),
+      timestamp: Date.now(),
+    };
+
+    setChatMessages(prev => [...prev, message]);
+    setNewMessage('');
+    toast.success('Message sent!');
   };
 
   const handleVoteScore = (vote: 'approve' | 'disagree') => {
@@ -302,7 +336,8 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
   };
 
   const handleReturnToMenu = () => {
-    // Clear game and return to home
+    // Clear game and return to home - chat deleted after game
+    setChatMessages([]);
     onGameComplete?.();
     onBack();
   };
@@ -335,6 +370,13 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
       default:
         return 'bg-gray-100 text-gray-700';
     }
+  };
+
+  const formatTime = (timestamp: number) => {
+    const date = new Date(timestamp);
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    return `${hours}:${minutes}`;
   };
 
   const teamAPlayers = players.filter(p => p.team === 1);
@@ -691,6 +733,7 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
             <h2 className="text-gray-900 font-bold text-2xl mb-2">Game Finished!</h2>
             <p className="text-gray-600 mb-2">Final Score: {team1Score} - {team2Score}</p>
             <p className="text-gray-600 text-sm mb-8">All players rated successfully</p>
+            <p className="text-gray-500 text-xs mb-6">💬 Group chat will be deleted shortly</p>
 
             <Button
               onClick={handleReturnToMenu}
@@ -805,14 +848,28 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
                 Location
               </Button>
               <Button
-                onClick={() => setShowInviteModal(true)}
+                onClick={() => setShowGroupChat(true)}
                 variant="outline"
-                className="rounded-2xl py-3 font-semibold border-blue-300 text-blue-700 hover:bg-blue-50 flex items-center justify-center gap-2"
+                className="rounded-2xl py-3 font-semibold border-blue-300 text-blue-700 hover:bg-blue-50 flex items-center justify-center gap-2 relative"
               >
-                <UserPlus className="w-5 h-5" />
-                Invite
+                <MessageCircle className="w-5 h-5" />
+                Chat
+                {chatMessages.length > 0 && (
+                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white text-xs font-bold">
+                    {chatMessages.length > 9 ? '9+' : chatMessages.length}
+                  </span>
+                )}
               </Button>
             </div>
+
+            <Button
+              onClick={() => setShowInviteModal(true)}
+              variant="outline"
+              className="w-full rounded-2xl py-3 font-semibold border-purple-300 text-purple-700 hover:bg-purple-50 flex items-center justify-center gap-2"
+            >
+              <UserPlus className="w-5 h-5" />
+              Invite Team Members
+            </Button>
 
             {!isHost && (
               <Button
@@ -1068,6 +1125,76 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
         </div>
       )}
 
+      {/* Group Chat Modal */}
+      {showGroupChat && (
+        <div className="fixed inset-0 bg-black/50 flex items-end max-w-md mx-auto z-50">
+          <div className="bg-white w-full rounded-t-3xl shadow-2xl animate-in slide-in-from-bottom max-h-[85vh] flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b sticky top-0 bg-white">
+              <div>
+                <h3 className="text-gray-900 font-bold text-lg">Game Chat</h3>
+                <p className="text-sm text-gray-600 mt-1">Discuss meetup details</p>
+              </div>
+              <button onClick={() => setShowGroupChat(false)} className="text-gray-500 hover:text-gray-700">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            {/* Messages */}
+            <ScrollArea className="flex-1 px-6 py-4">
+              <div className="space-y-3 pb-4">
+                {chatMessages.map((msg) => (
+                  <div key={msg.id} className={`flex gap-3 ${msg.playerId === 'current-user' ? 'justify-end' : ''}`}>
+                    {msg.playerId !== 'current-user' && (
+                      <Avatar className="size-8 flex-shrink-0">
+                        <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-500 text-white text-xs font-semibold">
+                          {msg.playerName.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                    )}
+                    <div className={`max-w-xs ${
+                      msg.playerId === 'current-user'
+                        ? 'bg-blue-600 text-white rounded-3xl rounded-tr-none'
+                        : 'bg-gray-100 text-gray-900 rounded-3xl rounded-tl-none'
+                    } px-4 py-2.5`}>
+                      {msg.playerId !== 'current-user' && (
+                        <p className="text-xs font-semibold mb-1 opacity-70">{msg.playerName}</p>
+                      )}
+                      <p className="text-sm">{msg.message}</p>
+                      <p className={`text-xs mt-1 ${
+                        msg.playerId === 'current-user' ? 'text-blue-100' : 'text-gray-500'
+                      }`}>
+                        {formatTime(msg.timestamp)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+
+            {/* Message Input */}
+            <div className="border-t p-4 sticky bottom-0 bg-white">
+              <div className="flex gap-2">
+                <Input
+                  type="text"
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                  placeholder="Type a message..."
+                  className="rounded-2xl px-4 py-2.5 flex-1"
+                />
+                <Button
+                  onClick={handleSendMessage}
+                  className="rounded-2xl px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center"
+                >
+                  <Send className="w-4 h-4" />
+                </Button>
+              </div>
+              <p className="text-xs text-gray-500 mt-2">💬 This chat will be deleted after the game</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Invite Team Members Modal */}
       {showInviteModal && (
         <div className="fixed inset-0 bg-black/50 flex items-end max-w-md mx-auto z-50">
@@ -1102,7 +1229,11 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
                             <div className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" />
                           )}
                         </div>
-                        <Badge className={`${getSkillBadgeColor(member.skillLevel)} text-xs font-semibold mt-1`}>
+                        <Badge className={`${
+                          member.skillLevel === 'Casual' ? 'bg-blue-100 text-blue-700' :
+                          member.skillLevel === 'Novice' ? 'bg-purple-100 text-purple-700' :
+                          'bg-yellow-100 text-yellow-700'
+                        } text-xs font-semibold mt-1`}>
                           {member.skillLevel}
                         </Badge>
                       </div>
