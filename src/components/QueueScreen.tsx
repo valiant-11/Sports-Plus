@@ -89,7 +89,9 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
   const [userVote, setUserVote] = useState<'approve' | 'disagree' | null>(null);
   const [showMapModal, setShowMapModal] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [showLeaveConfirmModal, setShowLeaveConfirmModal] = useState(false);
   const [kickingPlayerId, setKickingPlayerId] = useState<string | null>(null);
+  const [invitedMembers, setInvitedMembers] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (gameData) {
@@ -195,7 +197,24 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
       toast.error(`${member.name} is offline`);
       return;
     }
+    // Add to invited set
+    setInvitedMembers(prev => new Set([...prev, member.id]));
     toast.success(`Invitation sent to ${member.name}!`);
+  };
+
+  const handleLeaveGame = () => {
+    if (gameData) {
+      setShowLeaveConfirmModal(false);
+      // Clear game state
+      setUserReady(false);
+      setPlayers([]);
+      setReadyCount(0);
+      // Call the leave callback and then go back
+      onLeaveGame?.(gameData.id);
+      onGameComplete?.();
+      onBack();
+      toast.success('You have left the game');
+    }
   };
 
   const handleVoteScore = (vote: 'approve' | 'disagree') => {
@@ -829,7 +848,7 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
             )}
 
             <Button
-              onClick={() => gameData && onLeaveGame?.(gameData.id)}
+              onClick={() => setShowLeaveConfirmModal(true)}
               variant="outline"
               className="w-full rounded-2xl py-3 font-semibold border-red-200 text-red-600 hover:bg-red-50"
             >
@@ -987,6 +1006,31 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
         </div>
       </ScrollArea>
 
+      {/* Leave Confirm Modal */}
+      {showLeaveConfirmModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center max-w-md mx-auto z-50">
+          <div className="bg-white rounded-3xl shadow-2xl p-6 mx-4">
+            <h3 className="text-gray-900 font-bold text-lg mb-2">Leave Game?</h3>
+            <p className="text-gray-600 text-sm mb-6">Are you sure you want to leave this game? You won't be able to rejoin.</p>
+            <div className="flex gap-3">
+              <Button
+                onClick={() => setShowLeaveConfirmModal(false)}
+                variant="outline"
+                className="flex-1 rounded-2xl py-3 font-semibold border-gray-300"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleLeaveGame}
+                className="flex-1 rounded-2xl py-3 font-semibold text-white bg-red-600 hover:bg-red-700"
+              >
+                Leave
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Map Modal */}
       {showMapModal && (
         <div className="fixed inset-0 bg-black/50 flex items-end max-w-md mx-auto z-50">
@@ -1039,36 +1083,47 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
             </div>
             <ScrollArea className="flex-1 px-6 py-4">
               <div className="space-y-2">
-                {mockTeamMembers.map((member) => (
-                  <div
-                    key={member.id}
-                    className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors"
-                  >
-                    <Avatar className="size-10 flex-shrink-0">
-                      <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-500 text-white text-sm font-semibold">
-                        {member.name.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm text-gray-900 font-medium truncate">{member.name}</p>
-                        {member.online && (
-                          <div className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" />
-                        )}
-                      </div>
-                      <Badge className={`${getSkillBadgeColor(member.skillLevel)} text-xs font-semibold mt-1`}>
-                        {member.skillLevel}
-                      </Badge>
-                    </div>
-                    <button
-                      onClick={() => handleInviteTeamMember(member)}
-                      disabled={!member.online}
-                      className="p-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+                {mockTeamMembers.map((member) => {
+                  const isInvited = invitedMembers.has(member.id);
+                  return (
+                    <div
+                      key={member.id}
+                      className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors"
                     >
-                      <Send className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
+                      <Avatar className="size-10 flex-shrink-0">
+                        <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-500 text-white text-sm font-semibold">
+                          {member.name.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm text-gray-900 font-medium truncate">{member.name}</p>
+                          {member.online && (
+                            <div className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" />
+                          )}
+                        </div>
+                        <Badge className={`${getSkillBadgeColor(member.skillLevel)} text-xs font-semibold mt-1`}>
+                          {member.skillLevel}
+                        </Badge>
+                      </div>
+                      <button
+                        onClick={() => handleInviteTeamMember(member)}
+                        disabled={!member.online || isInvited}
+                        className={`p-2 rounded-lg transition-colors flex-shrink-0 ${
+                          isInvited
+                            ? 'bg-green-100 text-green-600 hover:bg-green-200'
+                            : 'bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed'
+                        } ${isInvited ? 'animate-pulse' : ''}`}
+                      >
+                        {isInvited ? (
+                          <CheckCircle2 className="w-4 h-4" />
+                        ) : (
+                          <Send className="w-4 h-4" />
+                        )}
+                      </button>
+                    </div>
+                  );
+                })}
               </div>
             </ScrollArea>
             <div className="p-6 border-t">
