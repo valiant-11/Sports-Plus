@@ -10,7 +10,7 @@ interface Game {
   id: string;
   title: string;
   sport: string;
-  skillLevel: string;
+  skillLevels: string[];
   location: string;
   date: string;
   time: string;
@@ -23,42 +23,94 @@ interface Game {
 const mockGames: Game[] = [
   {
     id: '1',
-    title: 'Morning Basketball',
+    title: 'Casual Morning Basketball',
     sport: 'Basketball',
-    skillLevel: 'Casual',
+    skillLevels: ['Casual'],
     location: 'Brgy. San Pedro',
-    date: 'Oct 5, 2025',
+    date: 'Dec 16, 2025',
     time: '8:00 AM',
     slots: { current: 8, max: 10 },
     organizer: { name: 'Alex Chen', verified: true, rating: 4.8 },
     distance: '0.5 km',
-    description: 'Friendly pickup game for all skill levels. Bring water and good vibes!',
+    description: 'Friendly pickup game for casual players. No experience needed!',
   },
   {
     id: '2',
-    title: 'Beach Volleyball',
+    title: 'Casual Volleyball Games',
     sport: 'Volleyball',
-    skillLevel: 'Novice',
+    skillLevels: ['Casual'],
     location: 'Brgy. Tiniguiban',
-    date: 'Oct 6, 2025',
+    date: 'Dec 16, 2025',
     time: '5:00 PM',
-    slots: { current: 4, max: 8 },
+    slots: { current: 6, max: 12 },
     organizer: { name: 'Sarah Miller', verified: true, rating: 4.9 },
     distance: '1.2 km',
-    description: 'Evening beach volleyball game. Perfect for intermediate players.',
+    description: 'Evening casual volleyball. Fun and relaxed atmosphere!',
   },
   {
     id: '3',
-    title: 'Elite Football Match',
+    title: 'Open Football - All Levels',
     sport: 'Football',
-    skillLevel: 'Elite',
+    skillLevels: ['Casual', 'Novice', 'Elite'],
     location: 'Brgy. Mandaragat',
-    date: 'Oct 7, 2025',
+    date: 'Dec 17, 2025',
     time: '6:30 PM',
-    slots: { current: 18, max: 22 },
-    organizer: { name: 'Mike Johnson', verified: false, rating: 4.2 },
+    slots: { current: 12, max: 22 },
+    organizer: { name: 'Mike Johnson', verified: true, rating: 4.7 },
     distance: '2.8 km',
-    description: 'Competitive match for experienced players only. Full gear required.',
+    description: 'Open match for everyone - casual, intermediate, and experienced players welcome!',
+  },
+  {
+    id: '4',
+    title: 'Novice & Elite Basketball Tournament',
+    sport: 'Basketball',
+    skillLevels: ['Novice', 'Elite'],
+    location: 'Brgy. Bagong Sikat',
+    date: 'Dec 18, 2025',
+    time: '7:00 AM',
+    slots: { current: 5, max: 16 },
+    organizer: { name: 'Anna Garcia', verified: true, rating: 4.6 },
+    distance: '1.8 km',
+    description: 'Competitive tournament for intermediate and experienced players.',
+  },
+  {
+    id: '5',
+    title: 'Badminton - Mixed Levels',
+    sport: 'Badminton',
+    skillLevels: ['Casual', 'Novice'],
+    location: 'Brgy. San Miguel',
+    date: 'Dec 19, 2025',
+    time: '4:00 PM',
+    slots: { current: 3, max: 8 },
+    organizer: { name: 'David Kim', verified: false, rating: 4.3 },
+    distance: '0.8 km',
+    description: 'Friendly badminton for casual and novice players.',
+  },
+  {
+    id: '6',
+    title: 'Elite Tennis Match',
+    sport: 'Tennis',
+    skillLevels: ['Elite'],
+    location: 'Brgy. Mabuhay',
+    date: 'Dec 20, 2025',
+    time: '6:00 PM',
+    slots: { current: 2, max: 4 },
+    organizer: { name: 'Lisa Brown', verified: true, rating: 5.0 },
+    distance: '2.5 km',
+    description: 'Elite-only tennis match. Bring your A-game!',
+  },
+  {
+    id: '7',
+    title: 'Swimming - All Levels Welcome',
+    sport: 'Swimming',
+    skillLevels: ['Casual', 'Novice', 'Elite'],
+    location: 'Brgy. Matahimik',
+    date: 'Dec 21, 2025',
+    time: '9:00 AM',
+    slots: { current: 7, max: 15 },
+    organizer: { name: 'Tom Anderson', verified: true, rating: 4.5 },
+    distance: '3.2 km',
+    description: 'Open swimming session for all skill levels.',
   },
 ];
 
@@ -88,9 +140,10 @@ interface HomeScreenProps {
   onOpenQueue?: () => void;
   onOpenMessages?: () => void;
   onRequestLocation?: () => void;
+  onRemoveJoinedGame?: (gameId: string) => void;
 }
 
-export function HomeScreen({ onOpenChat, myGames = [], onManageGame, onJoinGame, joinedGames = [], onOpenQueue, onOpenMessages, onRequestLocation }: HomeScreenProps) {
+export function HomeScreen({ onOpenChat, myGames = [], onManageGame, onJoinGame, joinedGames = [], onOpenQueue, onOpenMessages, onRequestLocation, onRemoveJoinedGame }: HomeScreenProps) {
   const [view, setView] = useState<'map' | 'list'>('list');
   const [selectedSport, setSelectedSport] = useState('all');
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
@@ -104,8 +157,8 @@ export function HomeScreen({ onOpenChat, myGames = [], onManageGame, onJoinGame,
       setPendingGameId(gameId);
       setShowLocationDialog(true);
     } else {
-      // If leaving, just call the handler
-      onJoinGame?.(gameId);
+      // If already joined, remove from joined games
+      onRemoveJoinedGame?.(gameId);
     }
   };
 
@@ -133,6 +186,20 @@ export function HomeScreen({ onOpenChat, myGames = [], onManageGame, onJoinGame,
       game.organizer.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }
+
+  const getSkillBadgeColor = (skillLevels: string[]) => {
+    if (skillLevels.length === 3) return 'bg-green-100 text-green-700';
+    if (skillLevels.includes('Elite') && skillLevels.includes('Novice')) return 'bg-purple-100 text-purple-700';
+    if (skillLevels.includes('Casual')) return 'bg-blue-100 text-blue-700';
+    if (skillLevels.includes('Elite')) return 'bg-yellow-100 text-yellow-700';
+    return 'bg-purple-100 text-purple-700';
+  };
+
+  const getSkillLabel = (skillLevels: string[]) => {
+    if (skillLevels.length === 3) return 'All Levels';
+    if (skillLevels.length === 1) return skillLevels[0];
+    return `${skillLevels.join(' & ')}`;
+  };
 
   return (
     <div className="h-screen w-full max-w-md mx-auto bg-gray-50 flex flex-col pb-20">
@@ -210,6 +277,8 @@ export function HomeScreen({ onOpenChat, myGames = [], onManageGame, onJoinGame,
                   { top: '25%', left: '30%' },
                   { top: '45%', left: '60%' },
                   { top: '65%', left: '40%' },
+                  { top: '35%', left: '70%' },
+                  { top: '55%', left: '20%' },
                 ];
                 const pos = positions[index % positions.length];
                 
@@ -330,7 +399,7 @@ export function HomeScreen({ onOpenChat, myGames = [], onManageGame, onJoinGame,
                   <div className="flex items-start gap-3">
                     <div className="text-3xl">{sportIcons[game.sport]}</div>
                     <div>
-                      <h3 className="text-gray-900">{game.title}</h3>
+                      <h3 className="text-gray-900 font-semibold">{game.title}</h3>
                       <div className="flex items-center gap-2 mt-1">
                         <span className="text-xs text-gray-600">{game.organizer.name}</span>
                         {game.organizer.verified && (
@@ -343,12 +412,8 @@ export function HomeScreen({ onOpenChat, myGames = [], onManageGame, onJoinGame,
                       </div>
                     </div>
                   </div>
-                  <Badge className={`${
-                    game.skillLevel === 'Casual' ? 'bg-green-100 text-green-700' :
-                    game.skillLevel === 'Novice' ? 'bg-blue-100 text-blue-700' :
-                    'bg-purple-100 text-purple-700'
-                  }`}>
-                    {game.skillLevel}
+                  <Badge className={getSkillBadgeColor(game.skillLevels)}>
+                    {getSkillLabel(game.skillLevels)}
                   </Badge>
                 </div>
 
@@ -373,13 +438,13 @@ export function HomeScreen({ onOpenChat, myGames = [], onManageGame, onJoinGame,
                 <div className="flex gap-2">
                   <Button 
                     onClick={() => toggleJoinGame(game.id)}
-                    className={`flex-1 rounded-xl transition-all ${
+                    className={`flex-1 rounded-xl transition-all font-semibold ${
                       joinedGames.includes(game.id)
-                        ? 'bg-green-600 hover:bg-green-700'
-                        : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800'
+                        ? 'bg-red-600 hover:bg-red-700 text-white'
+                        : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white'
                     }`}
                   >
-                    {joinedGames.includes(game.id) ? 'Joined ✓' : 'Join Game'}
+                    {joinedGames.includes(game.id) ? 'Leave Game' : 'Join Game'}
                   </Button>
                   {joinedGames.includes(game.id) && (
                     <Button
@@ -417,37 +482,37 @@ export function HomeScreen({ onOpenChat, myGames = [], onManageGame, onJoinGame,
           </DialogHeader>
           <div className="space-y-4 pt-4">
             <div>
-              <h4 className="text-gray-900 mb-2">Game Description</h4>
-              <p className="text-gray-600">{selectedGame?.description}</p>
+              <h4 className="text-gray-900 font-semibold mb-2">Game Description</h4>
+              <p className="text-gray-600 text-sm">{selectedGame?.description}</p>
             </div>
             <div>
-              <h4 className="text-gray-900 mb-2">Organizer</h4>
+              <h4 className="text-gray-900 font-semibold mb-2">Organizer</h4>
               <div className="flex items-center gap-2">
-                <span className="text-gray-700">{selectedGame?.organizer.name}</span>
+                <span className="text-gray-700 text-sm">{selectedGame?.organizer.name}</span>
                 {selectedGame?.organizer.verified && (
                   <CheckCircle2 className="w-4 h-4 text-blue-600" />
                 )}
                 <div className="flex items-center gap-1">
                   <Star className="w-4 h-4 fill-yellow-500 text-yellow-500" />
-                  <span className="text-gray-700">{selectedGame?.organizer.rating}</span>
+                  <span className="text-gray-700 text-sm">{selectedGame?.organizer.rating}</span>
                 </div>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <h4 className="text-gray-900 text-sm mb-1">Location</h4>
+                <h4 className="text-gray-900 text-sm font-semibold mb-1">Location</h4>
                 <p className="text-gray-600 text-sm">{selectedGame?.location}</p>
               </div>
               <div>
-                <h4 className="text-gray-900 text-sm mb-1">Date & Time</h4>
+                <h4 className="text-gray-900 text-sm font-semibold mb-1">Date & Time</h4>
                 <p className="text-gray-600 text-sm">{selectedGame?.date} at {selectedGame?.time}</p>
               </div>
               <div>
-                <h4 className="text-gray-900 text-sm mb-1">Skill Level</h4>
-                <p className="text-gray-600 text-sm">{selectedGame?.skillLevel}</p>
+                <h4 className="text-gray-900 text-sm font-semibold mb-1">Skill Levels</h4>
+                <p className="text-gray-600 text-sm">{selectedGame && getSkillLabel(selectedGame.skillLevels)}</p>
               </div>
               <div>
-                <h4 className="text-gray-900 text-sm mb-1">Available Slots</h4>
+                <h4 className="text-gray-900 text-sm font-semibold mb-1">Available Slots</h4>
                 <p className="text-gray-600 text-sm">{selectedGame?.slots.current}/{selectedGame?.slots.max}</p>
               </div>
             </div>
@@ -456,13 +521,13 @@ export function HomeScreen({ onOpenChat, myGames = [], onManageGame, onJoinGame,
                 toggleJoinGame(selectedGame!.id);
                 setSelectedGame(null);
               }}
-              className={`w-full rounded-xl transition-all ${
+              className={`w-full rounded-xl transition-all font-semibold ${
                 joinedGames.includes(selectedGame?.id || '')
-                  ? 'bg-green-600 hover:bg-green-700'
-                  : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800'
+                  ? 'bg-red-600 hover:bg-red-700 text-white'
+                  : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white'
               }`}
             >
-              {joinedGames.includes(selectedGame?.id || '') ? 'Joined ✓' : 'Join Game'}
+              {joinedGames.includes(selectedGame?.id || '') ? 'Leave Game' : 'Join Game'}
             </Button>
           </div>
         </DialogContent>
