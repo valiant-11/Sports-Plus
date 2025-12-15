@@ -431,16 +431,20 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
               <p className="text-sm text-gray-600 font-semibold mb-3">Players Approving:</p>
               <div className="flex flex-wrap gap-2 justify-center">
                 {players.map((player, index) => (
-                  <Badge
-                    key={player.id}
-                    className={`px-3 py-1.5 text-xs font-semibold ${
-                      index < votesApproved
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-gray-100 text-gray-600'
-                    }`}
-                  >
-                    {player.name}
-                  </Badge>
+                  <div key={player.id} className="flex flex-col items-center gap-1">
+                    <Badge
+                      className={`px-3 py-1.5 text-xs font-semibold ${
+                        index < votesApproved
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-gray-100 text-gray-600'
+                      }`}
+                    >
+                      {player.name}
+                    </Badge>
+                    <Badge className={`${getSkillBadgeColor(player.skillLevel)} text-xs font-semibold px-2 py-0.5`}>
+                      {player.skillLevel}
+                    </Badge>
+                  </div>
                 ))}
               </div>
             </div>
@@ -479,7 +483,7 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
                 </AvatarFallback>
               </Avatar>
               <h2 className="text-gray-900 font-bold text-2xl mb-2">{currentPlayer.name}</h2>
-              <Badge className={`${getSkillBadgeColor(currentPlayer.skillLevel)} text-xs font-semibold px-2 py-1 inline-block mb-4`}>
+              <Badge className={`${getSkillBadgeColor(currentPlayer.skillLevel)} text-xs font-semibold px-3 py-1 inline-block mb-4`}>
                 {currentPlayer.skillLevel}
               </Badge>
               <p className="text-gray-600 mb-6">How did they play?</p>
@@ -553,7 +557,12 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
           <div className="fixed inset-0 bg-black/50 flex items-end max-w-md mx-auto z-50">
             <div className="bg-white w-full rounded-t-3xl p-6 shadow-2xl animate-in slide-in-from-bottom max-h-[80vh] overflow-y-auto">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-gray-900 font-bold text-lg">Report {currentPlayer.name}</h3>
+                <div>
+                  <h3 className="text-gray-900 font-bold text-lg">Report {currentPlayer.name}</h3>
+                  <Badge className={`${getSkillBadgeColor(currentPlayer.skillLevel)} text-xs font-semibold px-2 py-0.5 mt-1`}>
+                    {currentPlayer.skillLevel}
+                  </Badge>
+                </div>
                 <button onClick={() => setShowReportModal(false)} className="text-gray-500 hover:text-gray-700">
                   <X className="w-5 h-5" />
                 </button>
@@ -807,15 +816,15 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <p className="text-sm text-gray-900 font-medium truncate">{player.name}</p>
                       {player.verified && <CheckCircle2 className="w-3 h-3 text-blue-600 flex-shrink-0" />}
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <Badge className={`${getSkillBadgeColor(player.skillLevel)} text-xs font-semibold`}>
+                    <Badge className={`${getSkillBadgeColor(player.skillLevel)} text-xs font-semibold mt-1`}>
                       {player.skillLevel}
                     </Badge>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
                     {player.isCurrentUser ? (
                       <Badge className="bg-blue-600 text-white text-xs">You</Badge>
                     ) : player.ready ? (
@@ -866,15 +875,15 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <p className="text-sm text-gray-900 font-medium truncate">{player.name}</p>
                       {player.verified && <CheckCircle2 className="w-3 h-3 text-blue-600 flex-shrink-0" />}
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <Badge className={`${getSkillBadgeColor(player.skillLevel)} text-xs font-semibold`}>
+                    <Badge className={`${getSkillBadgeColor(player.skillLevel)} text-xs font-semibold mt-1`}>
                       {player.skillLevel}
                     </Badge>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
                     {player.isCurrentUser ? (
                       <Badge className="bg-blue-600 text-white text-xs">You</Badge>
                     ) : player.ready ? (
