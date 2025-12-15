@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, MapPin, Clock, Users, CheckCircle2 } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, Users, CheckCircle2, Play } from 'lucide-react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { ScrollArea } from './ui/scroll-area';
@@ -100,6 +100,11 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
     }
   };
 
+  const handleStartGame = () => {
+    toast.success('Game started! Moving to active game screen...');
+    // Game logic will be handled by parent component
+  };
+
   const handleSwitchTeam = () => {
     if (userReady) {
       toast.error('Cannot switch teams after readying up');
@@ -152,6 +157,11 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
             <h1 className="text-white text-2xl font-bold">{gameData.title}</h1>
             <p className="text-white/80 text-sm">{gameData.sport}</p>
           </div>
+          {isHost && (
+            <Badge className="bg-purple-400 text-purple-900 font-semibold text-xs px-2.5 py-1 flex-shrink-0">
+              Host
+            </Badge>
+          )}
         </div>
 
         {/* Game Status Card */}
@@ -186,7 +196,9 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
                 </svg>
               </div>
               <div>
-                <p className="text-gray-900 font-medium text-sm">Waiting for all players to be ready</p>
+                <p className="text-gray-900 font-medium text-sm">
+                  {isHost ? 'Waiting for all players to be ready' : 'Waiting for all players to be ready'}
+                </p>
                 <p className="text-blue-600 text-xs mt-1 font-semibold">{readyCount}/{players.length} players ready</p>
               </div>
             </div>
@@ -194,25 +206,37 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false }: Q
 
           {/* Action Buttons */}
           <div className="space-y-3">
-            <Button
-              onClick={handleSwitchTeam}
-              disabled={userReady}
-              variant="outline"
-              className="w-full rounded-2xl py-3 font-semibold border-gray-300"
-            >
-              Switch Team
-            </Button>
+            {!isHost && (
+              <Button
+                onClick={handleSwitchTeam}
+                disabled={userReady}
+                variant="outline"
+                className="w-full rounded-2xl py-3 font-semibold border-gray-300"
+              >
+                Switch Team
+              </Button>
+            )}
 
-            <Button
-              onClick={handleReady}
-              className={`w-full rounded-2xl py-3 font-semibold text-white ${
-                userReady
-                  ? 'bg-gray-600 hover:bg-gray-700'
-                  : 'bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700'
-              }`}
-            >
-              {userReady ? 'Not Ready' : "I'm Ready!"}
-            </Button>
+            {isHost ? (
+              <Button
+                onClick={handleStartGame}
+                className="w-full rounded-2xl py-3 font-semibold text-white bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 flex items-center justify-center gap-2"
+              >
+                <Play className="w-5 h-5" />
+                Start Game
+              </Button>
+            ) : (
+              <Button
+                onClick={handleReady}
+                className={`w-full rounded-2xl py-3 font-semibold text-white ${
+                  userReady
+                    ? 'bg-gray-600 hover:bg-gray-700'
+                    : 'bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700'
+                }`}
+              >
+                {userReady ? 'Not Ready' : "I'm Ready!"}
+              </Button>
+            )}
 
             <Button
               onClick={() => gameData && onLeaveGame?.(gameData.id)}
