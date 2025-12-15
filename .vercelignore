@@ -1,0 +1,12 @@
+# Vercel build ignore patterns
+node_modules/
+.git/
+.gitignore
+.env.local
+.env.*.local
+CHANGELOG*.md
+README.md
+*.md
+.DS_Store
+src/guidelines/
+src/styles/
