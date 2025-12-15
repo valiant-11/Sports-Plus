@@ -20,6 +20,7 @@ interface Player {
   isVerified: boolean;
   rank: number;
   change: number; // ranking change
+  skillLevel?: 'Casual' | 'Novice' | 'Elite';
 }
 
 interface BarangayRanking {
@@ -29,30 +30,32 @@ interface BarangayRanking {
   rank: number;
 }
 
+const skillLevels: ('Casual' | 'Novice' | 'Elite')[] = ['Casual', 'Novice', 'Elite'];
+
 export function LeaderboardScreen({ onBack }: LeaderboardScreenProps) {
   const [selectedPeriod, setSelectedPeriod] = useState<'monthly' | 'all-time'>('monthly');
 
   // Mock data
   const topRatedPlayers: Player[] = [
-    { id: '1', name: 'Carlos Reyes', avatar: '', score: 4.9, gamesPlayed: 32, rating: 4.9, barangay: 'Brgy. San Pedro', isVerified: true, rank: 1, change: 0 },
-    { id: '2', name: 'Maria Santos', avatar: '', score: 4.8, gamesPlayed: 28, rating: 4.8, barangay: 'Brgy. Bancao-Bancao', isVerified: true, rank: 2, change: 1 },
-    { id: '3', name: 'Juan dela Cruz', avatar: '', score: 4.7, gamesPlayed: 25, rating: 4.7, barangay: 'Brgy. Mandaragat', isVerified: true, rank: 3, change: -1 },
-    { id: '4', name: 'Ana Lopez', avatar: '', score: 4.6, gamesPlayed: 22, rating: 4.6, barangay: 'Brgy. Bagong Sikat', isVerified: true, rank: 4, change: 2 },
-    { id: '5', name: 'Pedro Martinez', avatar: '', score: 4.5, gamesPlayed: 20, rating: 4.5, barangay: 'Brgy. San Jose', isVerified: true, rank: 5, change: 0 },
+    { id: '1', name: 'Carlos Reyes', avatar: '', score: 4.9, gamesPlayed: 32, rating: 4.9, barangay: 'Brgy. San Pedro', isVerified: true, rank: 1, change: 0, skillLevel: 'Elite' },
+    { id: '2', name: 'Maria Santos', avatar: '', score: 4.8, gamesPlayed: 28, rating: 4.8, barangay: 'Brgy. Bancao-Bancao', isVerified: true, rank: 2, change: 1, skillLevel: 'Elite' },
+    { id: '3', name: 'Juan dela Cruz', avatar: '', score: 4.7, gamesPlayed: 25, rating: 4.7, barangay: 'Brgy. Mandaragat', isVerified: true, rank: 3, change: -1, skillLevel: 'Novice' },
+    { id: '4', name: 'Ana Lopez', avatar: '', score: 4.6, gamesPlayed: 22, rating: 4.6, barangay: 'Brgy. Bagong Sikat', isVerified: true, rank: 4, change: 2, skillLevel: 'Elite' },
+    { id: '5', name: 'Pedro Martinez', avatar: '', score: 4.5, gamesPlayed: 20, rating: 4.5, barangay: 'Brgy. San Jose', isVerified: true, rank: 5, change: 0, skillLevel: 'Casual' },
   ];
 
   const mostVerifiedPlayers: Player[] = [
-    { id: '1', name: 'Carlos Reyes', avatar: '', score: 32, gamesPlayed: 32, rating: 4.9, barangay: 'Brgy. San Pedro', isVerified: true, rank: 1, change: 0 },
-    { id: '2', name: 'Maria Santos', avatar: '', score: 28, gamesPlayed: 28, rating: 4.8, barangay: 'Brgy. Bancao-Bancao', isVerified: true, rank: 2, change: 0 },
-    { id: '3', name: 'Juan dela Cruz', avatar: '', score: 25, gamesPlayed: 25, rating: 4.7, barangay: 'Brgy. Mandaragat', isVerified: true, rank: 3, change: 1 },
-    { id: '4', name: 'Ana Lopez', avatar: '', score: 22, gamesPlayed: 22, rating: 4.6, barangay: 'Brgy. Bagong Sikat', isVerified: true, rank: 4, change: -1 },
-    { id: '5', name: 'Pedro Martinez', avatar: '', score: 20, gamesPlayed: 20, rating: 4.5, barangay: 'Brgy. San Jose', isVerified: true, rank: 5, change: 0 },
+    { id: '1', name: 'Carlos Reyes', avatar: '', score: 32, gamesPlayed: 32, rating: 4.9, barangay: 'Brgy. San Pedro', isVerified: true, rank: 1, change: 0, skillLevel: 'Elite' },
+    { id: '2', name: 'Maria Santos', avatar: '', score: 28, gamesPlayed: 28, rating: 4.8, barangay: 'Brgy. Bancao-Bancao', isVerified: true, rank: 2, change: 0, skillLevel: 'Elite' },
+    { id: '3', name: 'Juan dela Cruz', avatar: '', score: 25, gamesPlayed: 25, rating: 4.7, barangay: 'Brgy. Mandaragat', isVerified: true, rank: 3, change: 1, skillLevel: 'Novice' },
+    { id: '4', name: 'Ana Lopez', avatar: '', score: 22, gamesPlayed: 22, rating: 4.6, barangay: 'Brgy. Bagong Sikat', isVerified: true, rank: 4, change: -1, skillLevel: 'Elite' },
+    { id: '5', name: 'Pedro Martinez', avatar: '', score: 20, gamesPlayed: 20, rating: 4.5, barangay: 'Brgy. San Jose', isVerified: true, rank: 5, change: 0, skillLevel: 'Casual' },
   ];
 
   const mvpRankings: Player[] = [
-    { id: '1', name: 'Carlos Reyes', avatar: '', score: 4.9, gamesPlayed: 32, rating: 4.9, barangay: 'Brgy. San Pedro', isVerified: true, rank: 1, change: 0 },
-    { id: '2', name: 'Maria Santos', avatar: '', score: 4.8, gamesPlayed: 28, rating: 4.8, barangay: 'Brgy. Bancao-Bancao', isVerified: true, rank: 2, change: 1 },
-    { id: '3', name: 'Juan dela Cruz', avatar: '', score: 4.7, gamesPlayed: 25, rating: 4.7, barangay: 'Brgy. Mandaragat', isVerified: true, rank: 3, change: 0 },
+    { id: '1', name: 'Carlos Reyes', avatar: '', score: 4.9, gamesPlayed: 32, rating: 4.9, barangay: 'Brgy. San Pedro', isVerified: true, rank: 1, change: 0, skillLevel: 'Elite' },
+    { id: '2', name: 'Maria Santos', avatar: '', score: 4.8, gamesPlayed: 28, rating: 4.8, barangay: 'Brgy. Bancao-Bancao', isVerified: true, rank: 2, change: 1, skillLevel: 'Elite' },
+    { id: '3', name: 'Juan dela Cruz', avatar: '', score: 4.7, gamesPlayed: 25, rating: 4.7, barangay: 'Brgy. Mandaragat', isVerified: true, rank: 3, change: 0, skillLevel: 'Novice' },
   ];
 
   const barangayRankings: BarangayRanking[] = [
@@ -64,8 +67,8 @@ export function LeaderboardScreen({ onBack }: LeaderboardScreenProps) {
   ];
 
   const hallOfFame: Player[] = [
-    { id: '1', name: 'Carlos Reyes', avatar: '', score: 4.9, gamesPlayed: 150, rating: 4.9, barangay: 'Brgy. San Pedro', isVerified: true, rank: 1, change: 0 },
-    { id: '2', name: 'Maria Santos', avatar: '', score: 4.8, gamesPlayed: 142, rating: 4.8, barangay: 'Brgy. Bancao-Bancao', isVerified: true, rank: 2, change: 0 },
+    { id: '1', name: 'Carlos Reyes', avatar: '', score: 4.9, gamesPlayed: 150, rating: 4.9, barangay: 'Brgy. San Pedro', isVerified: true, rank: 1, change: 0, skillLevel: 'Elite' },
+    { id: '2', name: 'Maria Santos', avatar: '', score: 4.8, gamesPlayed: 142, rating: 4.8, barangay: 'Brgy. Bancao-Bancao', isVerified: true, rank: 2, change: 0, skillLevel: 'Elite' },
   ];
 
   const getRankIcon = (rank: number) => {
@@ -80,6 +83,19 @@ export function LeaderboardScreen({ onBack }: LeaderboardScreenProps) {
     if (rank === 2) return 'bg-gradient-to-r from-gray-300 to-gray-500';
     if (rank === 3) return 'bg-gradient-to-r from-orange-400 to-orange-600';
     return 'bg-gray-200';
+  };
+
+  const getSkillBadgeColor = (skill?: string) => {
+    switch (skill) {
+      case 'Casual':
+        return 'bg-blue-100 text-blue-700';
+      case 'Novice':
+        return 'bg-purple-100 text-purple-700';
+      case 'Elite':
+        return 'bg-yellow-100 text-yellow-700';
+      default:
+        return 'bg-gray-100 text-gray-700';
+    }
   };
 
   const PlayerCard = ({ player, scoreLabel }: { player: Player; scoreLabel: string }) => (
@@ -100,7 +116,7 @@ export function LeaderboardScreen({ onBack }: LeaderboardScreenProps) {
       </div>
 
       <div className="flex-1">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <span className="font-medium text-gray-900">{player.name}</span>
           {player.isVerified && (
             <Badge variant="secondary" className="bg-blue-100 text-blue-700 h-5 px-1.5">
@@ -116,7 +132,10 @@ export function LeaderboardScreen({ onBack }: LeaderboardScreenProps) {
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2 mt-1">
+        <div className="flex items-center gap-2 mt-2 flex-wrap">
+          <Badge className={`${getSkillBadgeColor(player.skillLevel)} text-xs font-semibold`}>
+            {player.skillLevel}
+          </Badge>
           <span className="text-xs text-gray-500">{player.barangay}</span>
           <span className="text-xs text-gray-400">•</span>
           <span className="text-xs text-gray-500">{player.gamesPlayed} games</span>
