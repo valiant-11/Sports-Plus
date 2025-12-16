@@ -351,6 +351,9 @@ export default function App() {
   // Determine current game data and isHost status
   const currentGameData = createdGameData || joinedGameData;
   const isHostingGame = !!createdGameData;
+  
+  // Check if user has an active game (created OR joined)
+  const hasActiveGame = !!(createdGameData || joinedGameData);
 
   return (
     <div className="size-full flex items-center justify-center bg-gray-100">
@@ -591,8 +594,7 @@ export default function App() {
           activeTab={activeTab} 
           onTabChange={handleTabChange}
           unreadMessages={unreadMessages}
-          hasJoinedGames={joinedGames.length > 0}
-          hasCreatedGame={!!createdGameData}
+          hasActiveGame={hasActiveGame}
         />
       )}
       
