@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, MapPin, Clock, Users, CheckCircle2, Play, X, Trophy, Star, Flag, AlertCircle, Map, UserMinus, UserPlus, Send, MessageCircle, Gift } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, Users, CheckCircle2, Play, X, Trophy, Star, Flag, AlertCircle, Map, UserMinus, UserPlus, Send, MessageCircle, Gift, LogOut } from 'lucide-react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { ScrollArea } from './ui/scroll-area';
@@ -561,43 +561,56 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
           <p className="text-white/80 text-sm">Great game! Here's what you earned</p>
         </div>
 
-        <div className="flex-1 flex items-center justify-center px-6">
-          <div className="bg-white rounded-2xl shadow-lg p-8 text-center w-full">
-            <div className="mb-8 animate-bounce">
-              <Gift className="w-20 h-20 text-yellow-500 mx-auto" />
-            </div>
-            
-            <h2 className="text-gray-900 font-bold text-2xl mb-8">Game Complete!</h2>
-            
-            <div className="space-y-4 mb-8">
-              <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl p-6 border-2 border-blue-200">
-                <p className="text-sm text-blue-700 font-semibold mb-2">Points Earned</p>
-                <p className="text-4xl font-bold text-blue-600">+{points}</p>
+        <ScrollArea className="flex-1 px-6 py-8">
+          <div className="pb-32">
+            <div className="bg-white rounded-2xl shadow-lg p-8 text-center w-full">
+              <div className="mb-8 animate-bounce">
+                <Gift className="w-20 h-20 text-yellow-500 mx-auto" />
               </div>
               
-              <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-2xl p-6 border-2 border-green-200">
-                <p className="text-sm text-green-700 font-semibold mb-2">Reliability Score</p>
-                <p className="text-4xl font-bold text-green-600">+{reliability}</p>
+              <h2 className="text-gray-900 font-bold text-2xl mb-8">Game Complete!</h2>
+              
+              <div className="space-y-4 mb-8">
+                <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl p-6 border-2 border-blue-200">
+                  <p className="text-sm text-blue-700 font-semibold mb-2">Points Earned</p>
+                  <p className="text-4xl font-bold text-blue-600">+{points}</p>
+                </div>
+                
+                <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-2xl p-6 border-2 border-green-200">
+                  <p className="text-sm text-green-700 font-semibold mb-2">Reliability Score</p>
+                  <p className="text-4xl font-bold text-green-600">+{reliability}</p>
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-2xl p-4 border-2 border-yellow-200 mb-8">
+                <p className="text-sm text-gray-700 mb-2">Total Rewards This Game:</p>
+                <p className="text-lg font-bold text-gray-900">🏆 {points} Points + 👥 {reliability} Reliability</p>
+              </div>
+
+              <div className="space-y-3">
+                <Button
+                  onClick={() => {
+                    setShowRewardScreen(false);
+                    setGameState('completed');
+                    handleReturnToMenu();
+                  }}
+                  className="w-full rounded-2xl py-3 font-semibold text-white bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600"
+                >
+                  Back to Home
+                </Button>
+
+                <Button
+                  onClick={() => setShowLeaveConfirmModal(true)}
+                  variant="outline"
+                  className="w-full rounded-2xl py-3 font-semibold border-red-200 text-red-600 hover:bg-red-50 flex items-center justify-center gap-2"
+                >
+                  <LogOut className="w-4 h-4" />
+                  Leave Game
+                </Button>
               </div>
             </div>
-
-            <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-2xl p-4 border-2 border-yellow-200 mb-8">
-              <p className="text-sm text-gray-700 mb-2">Total Rewards This Game:</p>
-              <p className="text-lg font-bold text-gray-900">🏆 {points} Points + 👥 {reliability} Reliability</p>
-            </div>
-
-            <Button
-              onClick={() => {
-                setShowRewardScreen(false);
-                setGameState('completed');
-                handleReturnToMenu();
-              }}
-              className="w-full rounded-2xl py-3 font-semibold text-white bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600"
-            >
-              Back to Home
-            </Button>
           </div>
-        </div>
+        </ScrollArea>
       </div>
     );
   }
