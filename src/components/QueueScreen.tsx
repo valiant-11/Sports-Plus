@@ -1160,6 +1160,16 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
                     ) : (
                       <Badge className="bg-gray-100 text-gray-600 text-xs font-semibold">Waiting</Badge>
                     )}
+                    {isHost && !player.isCurrentUser && (
+                      <button
+                        onClick={() => handleKickPlayer(player.id, player.name)}
+                        disabled={kickingPlayerId === player.id}
+                        className="p-1.5 rounded-lg bg-red-100 hover:bg-red-200 text-red-600 transition-colors disabled:opacity-50"
+                        title="Kick player"
+                      >
+                        <UserMinus className="w-4 h-4" />
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -1195,6 +1205,16 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
                       <Badge className="bg-green-100 text-green-700 text-xs font-semibold">Ready</Badge>
                     ) : (
                       <Badge className="bg-gray-100 text-gray-600 text-xs font-semibold">Waiting</Badge>
+                    )}
+                    {isHost && !player.isCurrentUser && (
+                      <button
+                        onClick={() => handleKickPlayer(player.id, player.name)}
+                        disabled={kickingPlayerId === player.id}
+                        className="p-1.5 rounded-lg bg-red-100 hover:bg-red-200 text-red-600 transition-colors disabled:opacity-50"
+                        title="Kick player"
+                      >
+                        <UserMinus className="w-4 h-4" />
+                      </button>
                     )}
                   </div>
                 </div>
