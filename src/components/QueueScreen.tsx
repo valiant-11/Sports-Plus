@@ -108,6 +108,7 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
   ]);
   const [newMessage, setNewMessage] = useState('');
   const [allReadyMessage, setAllReadyMessage] = useState(false);
+  const [hostStarting, setHostStarting] = useState(false);
 
   useEffect(() => {
     if (gameData) {
@@ -115,7 +116,7 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
     }
   }, [gameData?.maxPlayers]);
 
-  // Auto-ready simulation after 4 seconds when user clicks ready (silent, no page)
+  // Auto-ready simulation after 4 seconds when user clicks ready
   useEffect(() => {
     if (gameState === 'waiting' && players.length > 0 && userReady) {
       const autoReadyTimer = setTimeout(() => {
@@ -125,16 +126,32 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
         setReadyCount(players.length);
         setAllReadyMessage(true);
         toast.success('All players are ready!');
-        
-        // If host, show activation message for Start Game button
-        if (isHost) {
-          toast.success('👉 Click "Start Game" to begin!');
-        }
       }, 4000);
       
       return () => clearTimeout(autoReadyTimer);
     }
-  }, [gameState, players, userReady, isHost]);
+  }, [gameState, players, userReady]);
+
+  // Auto-start game when all players are ready (simulates host action)
+  useEffect(() => {
+    if (allReadyMessage && readyCount === players.length && players.length > 0 && gameState === 'waiting') {
+      const autoStartTimer = setTimeout(() => {
+        setHostStarting(true);
+        toast.success('🎮 Host is starting the game...');
+        
+        setTimeout(() => {
+          // Simulate initial score being set by system
+          setTeam1Score('15');
+          setTeam2Score('12');
+          setGameState('vote-score');
+          setHostStarting(false);
+          toast.success('Game started! Vote on the score...');
+        }, 1000);
+      }, 2000); // 2 second delay after all ready
+      
+      return () => clearTimeout(autoStartTimer);
+    }
+  }, [allReadyMessage, readyCount, players.length, gameState]);
 
   const initializePlayers = () => {
     if (!gameData) return;
@@ -250,19 +267,6 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
     setChatMessages(prev => [...prev, message]);
     setNewMessage('');
     toast.success('Message sent!');
-  };
-
-  const handleStartGame = () => {
-    if (readyCount === players.length) {
-      // Simulate initial score being set by system
-      setTeam1Score('15');
-      setTeam2Score('12');
-      toast.info('Host is starting the game...');
-      setTimeout(() => {
-        setGameState('vote-score');
-        toast.success('Game started! Vote on the score...');
-      }, 500);
-    }
   };
 
   const handleVoteScore = (vote: 'approve' | 'disagree') => {
@@ -907,8 +911,8 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
             </div>
           </div>
 
-          {/* All Ready Message */}
-          {allReadyMessage && readyCount === players.length && (
+          {/* All Ready Message - Shows briefly before host starts game */}
+          {allReadyMessage && readyCount === players.length && gameState === 'waiting' && (
             <div className="bg-green-50 border-2 border-green-300 rounded-2xl p-4 animate-pulse">
               <div className="flex items-start gap-3">
                 <div className="mt-0.5">
@@ -916,7 +920,22 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
                 </div>
                 <div>
                   <p className="text-green-900 font-bold text-sm">✓ All players ready!</p>
-                  {isHost && <p className="text-green-700 text-xs mt-1 font-semibold">👉 Click "Start Game" to begin</p>}
+                  <p className="text-green-700 text-xs mt-1 font-semibold">🎮 Host is starting the game...</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Host Starting Message */}
+          {hostStarting && (
+            <div className="bg-purple-50 border-2 border-purple-300 rounded-2xl p-4 animate-bounce">
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5">
+                  <Play className="w-5 h-5 text-purple-600 animate-spin" />
+                </div>
+                <div>
+                  <p className="text-purple-900 font-bold text-sm">🚀 Starting Game...</p>
+                  <p className="text-purple-700 text-xs mt-1 font-semibold">Get ready!</p>
                 </div>
               </div>
             </div>
@@ -968,31 +987,17 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
               </Button>
             )}
 
-            {isHost ? (
-              <Button
-                onClick={handleStartGame}
-                disabled={readyCount < players.length}
-                className={`w-full rounded-2xl py-3 font-semibold text-white flex items-center justify-center gap-2 ${
-                  readyCount === players.length
-                    ? 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 animate-pulse'
-                    : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:opacity-50'
-                }`}
-              >
-                <Play className="w-5 h-5" />
-                Start Game
-              </Button>
-            ) : (
-              <Button
-                onClick={handleReady}
-                className={`w-full rounded-2xl py-3 font-semibold text-white ${
-                  userReady
-                    ? 'bg-green-600 hover:bg-green-700'
-                    : 'bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700'
-                }`}
-              >
-                {userReady ? '✓ Ready - Auto-starting in 4s' : "I'm Ready!"}
-              </Button>
-            )}
+            <Button
+              onClick={handleReady}
+              disabled={hostStarting}
+              className={`w-full rounded-2xl py-3 font-semibold text-white ${
+                userReady
+                  ? 'bg-green-600 hover:bg-green-700'
+                  : 'bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700'
+              } disabled:opacity-50`}
+            >
+              {userReady ? '✓ Ready - Starting soon...' : "I'm Ready!"}
+            </Button>
 
             <Button
               onClick={() => setShowLeaveConfirmModal(true)}
