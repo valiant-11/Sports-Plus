@@ -13,7 +13,6 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 
 interface CreateGameScreenProps {
   onCreateGame: (gameData: any) => void;
-  isVerified?: boolean;
   gamesCreatedToday?: number;
   gamesCreatedThisWeek?: number;
 }
@@ -36,7 +35,6 @@ const puertoPrincesaBarangays = [
 
 export function CreateGameScreen({ 
   onCreateGame, 
-  isVerified = true,
   gamesCreatedToday = 0,
   gamesCreatedThisWeek = 0
 }: CreateGameScreenProps) {
@@ -50,7 +48,6 @@ export function CreateGameScreen({
     time: '',
     maxPlayers: '',
   });
-  const [showVerificationDialog, setShowVerificationDialog] = useState(!isVerified);
   const [showLimitDialog, setShowLimitDialog] = useState(false);
   const [showMapDialog, setShowMapDialog] = useState(false);
   const [showLocationDialog, setShowLocationDialog] = useState(false);
@@ -72,11 +69,6 @@ export function CreateGameScreen({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!isVerified) {
-      setShowVerificationDialog(true);
-      return;
-    }
 
     // Validate skill levels selection
     if (formData.skillLevels.length === 0) {
@@ -335,42 +327,12 @@ export function CreateGameScreen({
                 Create Game
               </Button>
               <p className="text-xs text-center text-gray-500">
-                After game completion, you'll be able to upload proof, rate players, and finalize results.
+                After game completion, you'll be able to rate players and earn rewards!
               </p>
             </div>
           </form>
         </div>
       </ScrollArea>
-
-      <Dialog open={showVerificationDialog} onOpenChange={setShowVerificationDialog}>
-        <DialogContent className="max-w-[90%] rounded-2xl">
-          <DialogHeader>
-            <DialogTitle>Verification Required</DialogTitle>
-            <DialogDescription>
-              Only verified players can create games.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 pt-4">
-            <div className="flex items-center justify-center">
-              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
-                <AlertCircle className="w-8 h-8 text-blue-600" />
-              </div>
-            </div>
-            <p className="text-gray-700 text-center">
-              Verify your account to unlock this feature and start creating games.
-            </p>
-            <p className="text-sm text-gray-600 text-center">
-              Go to your profile and upload a valid ID with your name and photo to get verified.
-            </p>
-            <Button 
-              onClick={() => setShowVerificationDialog(false)}
-              className="w-full bg-blue-600 hover:bg-blue-700 rounded-xl"
-            >
-              Got it
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       <Dialog open={showLimitDialog} onOpenChange={setShowLimitDialog}>
         <DialogContent className="max-w-[90%] rounded-2xl">
