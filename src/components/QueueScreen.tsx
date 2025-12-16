@@ -196,12 +196,14 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
       team: 1,
       isCurrentUser: true,
       ready: false,
+      rating: 4.7,
       skillLevel: 'Elite',
     });
 
     for (let i = 1; i < gameData.maxPlayers; i++) {
       const team = (i % 2 === 0) ? 1 : 2;
       const randomSkill = skillLevels[Math.floor(Math.random() * skillLevels.length)];
+      const randomRating = parseFloat((3.5 + Math.random() * 1.5).toFixed(1));
       newPlayers.push({
         id: `player-${i}`,
         name: aiPlayerNames[i - 1] || `Player ${i}`,
@@ -209,11 +211,27 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
         team: team,
         isCurrentUser: false,
         ready: false,
+        rating: randomRating,
         skillLevel: randomSkill,
       });
     }
 
     setPlayers(newPlayers);
+  };
+
+  const handlePlayerClick = (player: Player) => {
+    if (player.isCurrentUser) return; // Don't show profile for current user
+    
+    setSelectedPlayer({
+      name: player.name,
+      username: player.name.toLowerCase().replace(' ', '_'),
+      userId: 'SP2025-' + Math.floor(Math.random() * 10000),
+      rating: player.rating || 4.5,
+      isVerified: player.verified,
+      gamesPlayed: Math.floor(Math.random() * 50) + 10,
+      reliabilityScore: Math.floor(Math.random() * 20) + 80,
+      achievements: ['Team Player', 'Active Member'],
+    });
   };
 
   const handleReady = () => {
@@ -1146,7 +1164,16 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
             </div>
             <div className="space-y-2">
               {teamAPlayers.map((player) => (
-                <div key={player.id} className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors ${player.isCurrentUser ? 'bg-blue-50 border border-blue-200' : 'bg-gray-50'} ${kickingPlayerId === player.id ? 'opacity-50' : ''}`}>
+                <button
+                  key={player.id}
+                  onClick={() => handlePlayerClick(player)}
+                  disabled={player.isCurrentUser}
+                  className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors text-left ${
+                    player.isCurrentUser 
+                      ? 'bg-blue-50 border border-blue-200 cursor-default' 
+                      : 'bg-gray-50 hover:bg-gray-100 cursor-pointer'
+                  } ${kickingPlayerId === player.id ? 'opacity-50' : ''}`}
+                >
                   <Avatar className="size-9 flex-shrink-0">
                     <AvatarFallback className="bg-gradient-to-br from-blue-500 to-green-500 text-white text-xs font-semibold">
                       {player.name.charAt(0)}
@@ -1168,7 +1195,10 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
                     )}
                     {isHost && !player.isCurrentUser && (
                       <button
-                        onClick={() => handleKickPlayer(player.id, player.name)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleKickPlayer(player.id, player.name);
+                        }}
                         disabled={kickingPlayerId === player.id}
                         className="p-1.5 rounded-lg bg-red-100 hover:bg-red-200 text-red-600 transition-colors disabled:opacity-50"
                         title="Kick player"
@@ -1177,7 +1207,7 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
                       </button>
                     )}
                   </div>
-                </div>
+                </button>
               ))}
             </div>
           </div>
@@ -1192,7 +1222,16 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
             </div>
             <div className="space-y-2">
               {teamBPlayers.map((player) => (
-                <div key={player.id} className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors ${player.isCurrentUser ? 'bg-blue-50 border border-blue-200' : 'bg-gray-50'} ${kickingPlayerId === player.id ? 'opacity-50' : ''}`}>
+                <button
+                  key={player.id}
+                  onClick={() => handlePlayerClick(player)}
+                  disabled={player.isCurrentUser}
+                  className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors text-left ${
+                    player.isCurrentUser 
+                      ? 'bg-blue-50 border border-blue-200 cursor-default' 
+                      : 'bg-gray-50 hover:bg-gray-100 cursor-pointer'
+                  } ${kickingPlayerId === player.id ? 'opacity-50' : ''}`}
+                >
                   <Avatar className="size-9 flex-shrink-0">
                     <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white text-xs font-semibold">
                       {player.name.charAt(0)}
@@ -1214,7 +1253,10 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
                     )}
                     {isHost && !player.isCurrentUser && (
                       <button
-                        onClick={() => handleKickPlayer(player.id, player.name)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleKickPlayer(player.id, player.name);
+                        }}
                         disabled={kickingPlayerId === player.id}
                         className="p-1.5 rounded-lg bg-red-100 hover:bg-red-200 text-red-600 transition-colors disabled:opacity-50"
                         title="Kick player"
@@ -1223,7 +1265,7 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
                       </button>
                     )}
                   </div>
-                </div>
+                </button>
               ))}
             </div>
           </div>
@@ -1365,6 +1407,19 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
             </div>
           </div>
         </div>
+      )}
+
+      {/* Mini Profile Card */}
+      {selectedPlayer && (
+        <MiniProfileCard
+          user={selectedPlayer}
+          onClose={() => setSelectedPlayer(null)}
+          onViewFullProfile={() => {
+            setSelectedPlayer(null);
+            // Can add navigation to full profile if needed
+            toast.info('Full profile view coming soon!');
+          }}
+        />
       )}
     </div>
   );
