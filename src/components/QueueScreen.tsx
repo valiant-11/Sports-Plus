@@ -107,6 +107,7 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
     { id: '2', playerId: 'player-2', playerName: 'Maria Santos', message: 'Sure, I\'ll be there by 5:45', timestamp: Date.now() - 240000 },
   ]);
   const [newMessage, setNewMessage] = useState('');
+  const [allReadyMessage, setAllReadyMessage] = useState(false);
 
   useEffect(() => {
     if (gameData) {
@@ -122,12 +123,18 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
         const updatedPlayers = players.map(p => ({ ...p, ready: true }));
         setPlayers(updatedPlayers);
         setReadyCount(players.length);
+        setAllReadyMessage(true);
         toast.success('All players are ready!');
+        
+        // If host, show activation message for Start Game button
+        if (isHost) {
+          toast.success('👉 Click "Start Game" to begin!');
+        }
       }, 4000);
       
       return () => clearTimeout(autoReadyTimer);
     }
-  }, [gameState, players, userReady]);
+  }, [gameState, players, userReady, isHost]);
 
   const initializePlayers = () => {
     if (!gameData) return;
@@ -178,6 +185,7 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
       toast.success('You are ready! All other players will be ready in 4 seconds...');
     } else {
       setUserReady(false);
+      setAllReadyMessage(false);
       setReadyCount(prev => Math.max(0, prev - 1));
       setPlayers(prev => prev.map(p => 
         p.isCurrentUser ? { ...p, ready: false } : p
@@ -242,6 +250,19 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
     setChatMessages(prev => [...prev, message]);
     setNewMessage('');
     toast.success('Message sent!');
+  };
+
+  const handleStartGame = () => {
+    if (readyCount === players.length) {
+      // Simulate initial score being set by system
+      setTeam1Score('15');
+      setTeam2Score('12');
+      toast.info('Host is starting the game...');
+      setTimeout(() => {
+        setGameState('vote-score');
+        toast.success('Game started! Vote on the score...');
+      }, 500);
+    }
   };
 
   const handleVoteScore = (vote: 'approve' | 'disagree') => {
@@ -886,6 +907,21 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
             </div>
           </div>
 
+          {/* All Ready Message */}
+          {allReadyMessage && readyCount === players.length && (
+            <div className="bg-green-50 border-2 border-green-300 rounded-2xl p-4 animate-pulse">
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5">
+                  <CheckCircle2 className="w-5 h-5 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-green-900 font-bold text-sm">✓ All players ready!</p>
+                  {isHost && <p className="text-green-700 text-xs mt-1 font-semibold">👉 Click "Start Game" to begin</p>}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Action Buttons */}
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
@@ -934,9 +970,13 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
 
             {isHost ? (
               <Button
-                onClick={() => setGameState('vote-score')}
+                onClick={handleStartGame}
                 disabled={readyCount < players.length}
-                className="w-full rounded-2xl py-3 font-semibold text-white bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:opacity-50 flex items-center justify-center gap-2"
+                className={`w-full rounded-2xl py-3 font-semibold text-white flex items-center justify-center gap-2 ${
+                  readyCount === players.length
+                    ? 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 animate-pulse'
+                    : 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 disabled:opacity-50'
+                }`}
               >
                 <Play className="w-5 h-5" />
                 Start Game
