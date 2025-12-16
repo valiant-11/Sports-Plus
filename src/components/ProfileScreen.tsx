@@ -1,4 +1,4 @@
-import { Settings, CheckCircle2, Trophy, Award, Upload, Star, Camera, History, Edit2, X } from 'lucide-react';
+import { Settings, CheckCircle2, Trophy, Award, Upload, Star, Camera, History, Edit2, X, Info, AlertCircle } from 'lucide-react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
@@ -36,10 +36,84 @@ const badges = [
 
 const skillLevelOptions: ('Casual' | 'Novice' | 'Elite')[] = ['Casual', 'Novice', 'Elite'];
 
+// Reliability score tiers and their game limits
+const reliabilityTiers = [
+  { 
+    range: '95-100%', 
+    score: 95, 
+    color: 'from-green-500 to-emerald-600',
+    bgColor: 'bg-green-50',
+    borderColor: 'border-green-300',
+    textColor: 'text-green-700',
+    playLimit: 10,
+    createLimit: 5,
+    title: 'Excellent',
+    description: 'Maximum game access',
+  },
+  { 
+    range: '85-94%', 
+    score: 85, 
+    color: 'from-blue-500 to-blue-600',
+    bgColor: 'bg-blue-50',
+    borderColor: 'border-blue-300',
+    textColor: 'text-blue-700',
+    playLimit: 8,
+    createLimit: 4,
+    title: 'Great',
+    description: 'High game access',
+  },
+  { 
+    range: '70-84%', 
+    score: 70, 
+    color: 'from-yellow-500 to-orange-500',
+    bgColor: 'bg-yellow-50',
+    borderColor: 'border-yellow-300',
+    textColor: 'text-yellow-700',
+    playLimit: 5,
+    createLimit: 3,
+    title: 'Good',
+    description: 'Moderate game access',
+  },
+  { 
+    range: '50-69%', 
+    score: 50, 
+    color: 'from-orange-500 to-red-500',
+    bgColor: 'bg-orange-50',
+    borderColor: 'border-orange-300',
+    textColor: 'text-orange-700',
+    playLimit: 3,
+    createLimit: 2,
+    title: 'Fair',
+    description: 'Limited game access',
+  },
+  { 
+    range: '0-49%', 
+    score: 0, 
+    color: 'from-red-500 to-red-700',
+    bgColor: 'bg-red-50',
+    borderColor: 'border-red-300',
+    textColor: 'text-red-700',
+    playLimit: 1,
+    createLimit: 1,
+    title: 'Low',
+    description: 'Very limited access',
+  },
+];
+
+const getReliabilityTier = (score: number) => {
+  for (const tier of reliabilityTiers) {
+    if (score >= tier.score) {
+      return tier;
+    }
+  }
+  return reliabilityTiers[reliabilityTiers.length - 1];
+};
+
 export function ProfileScreen({ onSettings, onViewAchievements, onViewHistory, onVerify, userData }: ProfileScreenProps) {
   const [showVerificationDialog, setShowVerificationDialog] = useState(false);
   const [showProfilePictureDialog, setShowProfilePictureDialog] = useState(false);
   const [showEditSkillDialog, setShowEditSkillDialog] = useState(false);
+  const [showReliabilityInfoDialog, setShowReliabilityInfoDialog] = useState(false);
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
   const [userSkillLevel, setUserSkillLevel] = useState<'Casual' | 'Novice' | 'Elite'>(userData?.skillLevel || 'Novice');
   const [selectedSkillLevel, setSelectedSkillLevel] = useState<'Casual' | 'Novice' | 'Elite'>(userSkillLevel);
@@ -58,6 +132,7 @@ export function ProfileScreen({ onSettings, onViewAchievements, onViewHistory, o
   };
 
   const user = userData || defaultUserData;
+  const currentTier = getReliabilityTier(user.reliabilityScore);
 
   const handleUploadProfilePicture = () => {
     toast.success('Profile picture uploaded!');
@@ -148,15 +223,24 @@ export function ProfileScreen({ onSettings, onViewAchievements, onViewHistory, o
       </div>
 
       <div className="px-6 -mt-4 space-y-4">
-        <div className="bg-white rounded-2xl shadow-xl shadow-gray-200/50 p-4">
+        <button 
+          onClick={() => setShowReliabilityInfoDialog(true)}
+          className="w-full bg-white rounded-2xl shadow-xl shadow-gray-200/50 p-4 hover:shadow-2xl transition-all text-left"
+        >
           <div className="flex items-center justify-between mb-3">
-            <div>
+            <div className="flex items-center gap-2">
               <p className="text-sm text-gray-600">Reliability Score</p>
-              <p className="text-2xl text-gray-900">{user.reliabilityScore}%</p>
+              <Info className="w-4 h-4 text-blue-500" />
             </div>
             <div className="w-14 h-14 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center">
               <Trophy className="w-7 h-7 text-white" />
             </div>
+          </div>
+          <div className="flex items-end gap-2 mb-2">
+            <p className="text-2xl text-gray-900">{user.reliabilityScore}%</p>
+            <Badge className={`${currentTier.bgColor} ${currentTier.textColor} mb-1`}>
+              {currentTier.title}
+            </Badge>
           </div>
           <Progress value={user.reliabilityScore} className="h-2 mb-2" />
           <p className="text-xs text-gray-500">
@@ -164,7 +248,17 @@ export function ProfileScreen({ onSettings, onViewAchievements, onViewHistory, o
              user.reliabilityScore >= 70 ? 'Good reliability. Show up to more games to improve.' :
              'Low reliability. Attend games to improve your score.'}
           </p>
-        </div>
+          <div className="mt-3 pt-3 border-t border-gray-100">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-gray-600">Daily Play Limit</span>
+              <span className="font-semibold text-gray-900">{currentTier.playLimit} games/day</span>
+            </div>
+            <div className="flex items-center justify-between text-xs mt-1">
+              <span className="text-gray-600">Daily Create Limit</span>
+              <span className="font-semibold text-gray-900">{currentTier.createLimit} games/day</span>
+            </div>
+          </div>
+        </button>
 
         <div className="grid grid-cols-3 gap-3">
           <button 
@@ -301,6 +395,134 @@ export function ProfileScreen({ onSettings, onViewAchievements, onViewHistory, o
           </div>
         )}
       </div>
+
+      {/* Reliability Score Info Dialog */}
+      <Dialog open={showReliabilityInfoDialog} onOpenChange={setShowReliabilityInfoDialog}>
+        <DialogContent className="max-w-[90%] rounded-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Trophy className="w-5 h-5 text-blue-600" />
+              Reliability Score
+            </DialogTitle>
+            <DialogDescription>
+              Your reliability score affects how many games you can play and create daily
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 pt-4">
+            {/* Current Score */}
+            <div className={`p-4 rounded-2xl border-2 ${currentTier.borderColor} ${currentTier.bgColor}`}>
+              <div className="flex items-center justify-between mb-2">
+                <div>
+                  <p className="text-xs ${currentTier.textColor} font-semibold">Your Current Score</p>
+                  <p className="text-3xl font-bold ${currentTier.textColor}">{user.reliabilityScore}%</p>
+                </div>
+                <div className={`px-4 py-2 rounded-xl bg-gradient-to-r ${currentTier.color}`}>
+                  <p className="text-white font-bold">{currentTier.title}</p>
+                </div>
+              </div>
+              <div className="mt-3 pt-3 border-t ${currentTier.borderColor}">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm ${currentTier.textColor} font-semibold">Daily Play Limit:</span>
+                  <span className="text-lg font-bold ${currentTier.textColor}">{currentTier.playLimit} games</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm ${currentTier.textColor} font-semibold">Daily Create Limit:</span>
+                  <span className="text-lg font-bold ${currentTier.textColor}">{currentTier.createLimit} games</span>
+                </div>
+              </div>
+            </div>
+
+            {/* How it works */}
+            <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <h4 className="text-blue-900 font-semibold mb-2">How It Works</h4>
+                  <ul className="space-y-2 text-sm text-blue-800">
+                    <li className="flex items-start gap-2">
+                      <span className="text-blue-600 mt-0.5">•</span>
+                      <span>Show up to games on time to increase your score</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-blue-600 mt-0.5">•</span>
+                      <span>Missing games or leaving early decreases your score</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-blue-600 mt-0.5">•</span>
+                      <span>Higher scores unlock more games per day</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="text-blue-600 mt-0.5">•</span>
+                      <span>Maintain 70%+ for best experience</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            {/* All Tiers */}
+            <div>
+              <h4 className="text-gray-900 font-semibold mb-3">Reliability Tiers</h4>
+              <div className="space-y-3">
+                {reliabilityTiers.map((tier, index) => {
+                  const isCurrentTier = user.reliabilityScore >= tier.score && 
+                    (index === 0 || user.reliabilityScore < reliabilityTiers[index - 1].score);
+                  
+                  return (
+                    <div
+                      key={tier.range}
+                      className={`p-4 rounded-2xl border-2 transition-all ${
+                        isCurrentTier 
+                          ? `${tier.borderColor} ${tier.bgColor} shadow-md` 
+                          : 'border-gray-200 bg-gray-50'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <p className={`font-bold ${isCurrentTier ? tier.textColor : 'text-gray-700'}`}>
+                              {tier.title}
+                            </p>
+                            {isCurrentTier && (
+                              <Badge className="bg-blue-600 text-white text-xs">Current</Badge>
+                            )}
+                          </div>
+                          <p className="text-xs text-gray-600">{tier.range}</p>
+                        </div>
+                        <div className={`px-3 py-1 rounded-lg bg-gradient-to-r ${tier.color}`}>
+                          <Trophy className="w-4 h-4 text-white" />
+                        </div>
+                      </div>
+                      <div className="mt-3 space-y-1">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-gray-600">🎮 Play Daily:</span>
+                          <span className={`font-semibold ${isCurrentTier ? tier.textColor : 'text-gray-700'}`}>
+                            {tier.playLimit} games
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-gray-600">🎯 Create Daily:</span>
+                          <span className={`font-semibold ${isCurrentTier ? tier.textColor : 'text-gray-700'}`}>
+                            {tier.createLimit} games
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <Button
+              onClick={() => setShowReliabilityInfoDialog(false)}
+              className="w-full rounded-2xl py-3 bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              Got It
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Edit Skill Level Dialog */}
       <Dialog open={showEditSkillDialog} onOpenChange={setShowEditSkillDialog}>
