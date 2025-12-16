@@ -584,7 +584,7 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
                   <div key={player.id} className="flex flex-col items-center gap-1">
                     <Badge
                       className={`px-3 py-1.5 text-xs font-semibold ${
-n                        index < votesApproved
+                        index < votesApproved
                           ? 'bg-green-100 text-green-700'
                           : 'bg-gray-100 text-gray-600'
                       }`}
