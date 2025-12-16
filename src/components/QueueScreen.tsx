@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, MapPin, Clock, Users, CheckCircle2, Play, X, Trophy, Star, Flag, AlertCircle, Map, UserMinus, UserPlus, Send, MessageCircle } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, Users, CheckCircle2, Play, X, Trophy, Star, Flag, AlertCircle, Map, UserMinus, UserPlus, Send, MessageCircle, Gift } from 'lucide-react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { ScrollArea } from './ui/scroll-area';
@@ -13,6 +13,7 @@ interface QueueScreenProps {
   onLeaveGame?: (gameId: string) => void;
   onFinishGame?: (gameId: string, gameTitle: string, organizer: any) => void;
   onGameComplete?: () => void;
+  onRewardsEarned?: (points: number, reliability: number) => void;
   gameData?: {
     id: string;
     title: string;
@@ -54,7 +55,7 @@ interface ChatMessage {
   timestamp: number;
 }
 
-type GameState = 'waiting' | 'active' | 'vote-score' | 'rescore' | 'revote-score' | 'rating' | 'completed';
+type GameState = 'waiting' | 'auto-ready' | 'active' | 'vote-score' | 'rescore' | 'revote-score' | 'rating' | 'rewards' | 'completed';
 
 const skillLevels: ('Casual' | 'Novice' | 'Elite')[] = ['Casual', 'Novice', 'Elite'];
 
@@ -76,13 +77,14 @@ const mockTeamMembers: TeamMember[] = [
   { id: 'tm4', name: 'James Wilson', avatar: '', skillLevel: 'Casual', online: true },
 ];
 
-export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onGameComplete }: QueueScreenProps) {
+export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onGameComplete, onRewardsEarned }: QueueScreenProps) {
   const [selectedPlayer, setSelectedPlayer] = useState<any>(null);
   const [players, setPlayers] = useState<Player[]>([]);
   const [userReady, setUserReady] = useState(false);
   const [userTeam, setUserTeam] = useState<1 | 2>(1);
   const [readyCount, setReadyCount] = useState(0);
   const [gameState, setGameState] = useState<GameState>('waiting');
+  const [autoReadyTimer, setAutoReadyTimer] = useState<number | null>(null);
   const [team1Score, setTeam1Score] = useState('');
   const [team2Score, setTeam2Score] = useState('');
   const [votesApproved, setVotesApproved] = useState(0);
@@ -113,28 +115,38 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
     }
   }, [gameData?.maxPlayers]);
 
-  // Auto-ready all other players and start game ONLY after user clicks ready
+  // Auto-ready simulation after 4 seconds when user clicks ready
   useEffect(() => {
-    if (gameState === 'waiting' && players.length > 0 && userReady && readyCount < players.length) {
-      const timer = setTimeout(() => {
-        // Auto-ready remaining players
-        const updatedPlayers = players.map(p => ({ ...p, ready: true }));
-        setPlayers(updatedPlayers);
-        setReadyCount(players.length);
-        toast.success('All players are ready!');
-
-        // Auto-start game after another delay
-        const startTimer = setTimeout(() => {
-          setGameState('vote-score');
-          setTeam1Score('12');
-          setTeam2Score('15');
-          toast.success('Game finished! Voting on final score...');
-        }, 2000);
-        return () => clearTimeout(startTimer);
-      }, 3000);
-      return () => clearTimeout(timer);
+    if (gameState === 'waiting' && players.length > 0 && userReady) {
+      setGameState('auto-ready');
+      setAutoReadyTimer(4);
+      
+      const interval = setInterval(() => {
+        setAutoReadyTimer(prev => {
+          if (prev === null || prev <= 1) {
+            clearInterval(interval);
+            // Auto-ready all other players
+            const updatedPlayers = players.map(p => ({ ...p, ready: true }));
+            setPlayers(updatedPlayers);
+            setReadyCount(players.length);
+            toast.success('All players are ready! Starting game...');
+            
+            // Start game immediately
+            setTimeout(() => {
+              setGameState('vote-score');
+              setTeam1Score('12');
+              setTeam2Score('15');
+              toast.success('Game finished! Voting on final score...');
+            }, 1500);
+            return null;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      
+      return () => clearInterval(interval);
     }
-  }, [gameState, players, readyCount, userReady]);
+  }, [gameState, players, userReady]);
 
   const initializePlayers = () => {
     if (!gameData) return;
@@ -182,9 +194,11 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
       setPlayers(prev => prev.map(p => 
         p.isCurrentUser ? { ...p, ready: true } : p
       ));
-      toast.success('You are ready! Waiting for others...');
+      toast.success('You are ready! All other players will be ready in 4 seconds...');
     } else {
       setUserReady(false);
+      setGameState('waiting');
+      setAutoReadyTimer(null);
       setReadyCount(prev => Math.max(0, prev - 1));
       setPlayers(prev => prev.map(p => 
         p.isCurrentUser ? { ...p, ready: false } : p
@@ -318,9 +332,9 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
     if (currentRatingIndex < players.length - 1) {
       setCurrentRatingIndex(prev => prev + 1);
     } else {
-      // All players rated
-      setGameState('completed');
-      toast.success('Game completed! Thanks for playing!');
+      // All players rated - show rewards
+      setGameState('rewards');
+      toast.success('All ratings submitted! Calculating rewards...');
     }
   };
 
@@ -385,6 +399,101 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
   // Default coordinates (example: San Francisco)
   const gameLat = gameData?.latitude || 37.7749;
   const gameLng = gameData?.longitude || -122.4194;
+
+  // AUTO-READY SCREEN
+  if (gameState === 'auto-ready') {
+    return (
+      <div className="h-screen w-full max-w-md mx-auto bg-gray-50 flex flex-col">
+        <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-green-600 pt-8 pb-8 px-6 rounded-b-3xl">
+          <h1 className="text-white text-2xl font-bold">Preparing Game</h1>
+          <p className="text-white/80 text-sm">Getting all players ready...</p>
+        </div>
+
+        <div className="flex-1 flex items-center justify-center px-6">
+          <div className="text-center">
+            <div className="w-20 h-20 mx-auto mb-6 relative">
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="text-4xl font-bold text-blue-600">{autoReadyTimer || '0'}</div>
+              </div>
+              <svg className="w-full h-full animate-spin" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="45" fill="none" stroke="#e0e7ff" strokeWidth="2" />
+                <circle cx="50" cy="50" r="45" fill="none" stroke="url(#gradient)" strokeWidth="2" strokeDasharray="70 282" />
+                <defs>
+                  <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#3b82f6" />
+                    <stop offset="100%" stopColor="#10b981" />
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
+            <h2 className="text-gray-900 font-bold text-xl mb-2">Getting Players Ready</h2>
+            <p className="text-gray-600 text-sm mb-4">All other players will be ready in {autoReadyTimer} seconds</p>
+            <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 mb-6">
+              <p className="text-sm text-blue-700 font-semibold">Current Status:</p>
+              <p className="text-2xl font-bold text-blue-600 mt-2">{readyCount}/{players.length} Ready</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // REWARDS SCREEN
+  if (gameState === 'rewards') {
+    const points = 50;
+    const reliability = 5;
+    
+    useEffect(() => {
+      // Trigger reward callback
+      onRewardsEarned?.(points, reliability);
+    }, []);
+
+    return (
+      <div className="h-screen w-full max-w-md mx-auto bg-gray-50 flex flex-col">
+        <div className="bg-gradient-to-br from-yellow-500 via-orange-500 to-red-500 pt-8 pb-8 px-6 rounded-b-3xl">
+          <h1 className="text-white text-2xl font-bold">Rewards Earned!</h1>
+          <p className="text-white/80 text-sm">Great game! Here's what you earned</p>
+        </div>
+
+        <div className="flex-1 flex items-center justify-center px-6">
+          <div className="bg-white rounded-2xl shadow-lg p-8 text-center w-full">
+            <div className="mb-8 animate-bounce">
+              <Gift className="w-20 h-20 text-yellow-500 mx-auto" />
+            </div>
+            
+            <h2 className="text-gray-900 font-bold text-2xl mb-8">Game Complete!</h2>
+            
+            <div className="space-y-4 mb-8">
+              <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl p-6 border-2 border-blue-200">
+                <p className="text-sm text-blue-700 font-semibold mb-2">Points Earned</p>
+                <p className="text-4xl font-bold text-blue-600">+{points}</p>
+              </div>
+              
+              <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-2xl p-6 border-2 border-green-200">
+                <p className="text-sm text-green-700 font-semibold mb-2">Reliability Score</p>
+                <p className="text-4xl font-bold text-green-600">+{reliability}</p>
+              </div>
+            </div>
+
+            <div className="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-2xl p-4 border-2 border-yellow-200 mb-8">
+              <p className="text-sm text-gray-700 mb-2">Total Rewards This Game:</p>
+              <p className="text-lg font-bold text-gray-900">🏆 {points} Points + 👥 {reliability} Reliability</p>
+            </div>
+
+            <Button
+              onClick={() => {
+                setGameState('completed');
+                handleReturnToMenu();
+              }}
+              className="w-full rounded-2xl py-3 font-semibold text-white bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600"
+            >
+              Back to Home
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // VOTE SCORE SCREEN
   if (gameState === 'vote-score') {
@@ -900,7 +1009,7 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
                     : 'bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700'
                 }`}
               >
-                {userReady ? '✓ Ready - Waiting for others' : "I'm Ready!"}
+                {userReady ? '✓ Ready - Auto-starting in ' + (autoReadyTimer || '0') + 's' : "I'm Ready!"}
               </Button>
             )}
 
