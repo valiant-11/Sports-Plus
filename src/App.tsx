@@ -84,7 +84,7 @@ export default function App() {
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
   const [createdGameData, setCreatedGameData] = useState<any>(null);
-  const [hasCreatedGame, setHasCreatedGame] = useState(false);
+  const [joinedGameData, setJoinedGameData] = useState<any>(null);
   const [postGameParticipants, setPostGameParticipants] = useState<any[]>([]);
   const [participantFeedbackData, setParticipantFeedbackData] = useState<any>(null);
 
@@ -145,8 +145,8 @@ export default function App() {
         setSelectedChatId(null);
         break;
       case 'create':
-        // If user has a game (created or joined), show queue view
-        if (createdGameData) {
+        // If user has a game (created OR joined), show queue view
+        if (createdGameData || joinedGameData) {
           setCurrentScreen('queue');
         } else {
           setCurrentScreen('create');
@@ -171,10 +171,17 @@ export default function App() {
         toast.error('You can only join one game at a time. Leave your current game first.');
         return;
       }
+      
+      // Check if user already created a game
+      if (createdGameData) {
+        toast.error('You cannot join a game while hosting one. Cancel your game first.');
+        return;
+      }
+      
       setJoinedGames([gameId]);
       
       // Mock game data for the joined game
-      const joinedGameData = {
+      const newJoinedGameData = {
         id: gameId,
         title: 'Morning Basketball',
         sport: '🏀 Basketball',
@@ -183,7 +190,7 @@ export default function App() {
         time: '8:00 AM',
         maxPlayers: 10,
       };
-      setCreatedGameData(joinedGameData);
+      setJoinedGameData(newJoinedGameData);
       setSelectedGameId(gameId);
       
       toast.success('Joined game successfully!');
@@ -195,7 +202,7 @@ export default function App() {
 
   const handleRemoveJoinedGame = (gameId: string) => {
     setJoinedGames(prev => prev.filter(id => id !== gameId));
-    setCreatedGameData(null);
+    setJoinedGameData(null);
     setSelectedGameId(null);
     toast.info('You have left the game');
   };
@@ -230,7 +237,6 @@ export default function App() {
       maxPlayers: parseInt(gameData.maxPlayers) || 10,
     });
     setSelectedGameId(newGameId);
-    setHasCreatedGame(true);
     setCurrentScreen('queue');
     setActiveTab('create');
     toast.success('Game created successfully! Get ready to play!');
@@ -262,7 +268,6 @@ export default function App() {
     if (selectedGameId) {
       setMyGames(prev => prev.filter(g => g.id !== selectedGameId));
     }
-    setHasCreatedGame(false);
     setCreatedGameData(null);
     setCurrentScreen('home');
     setActiveTab('home');
@@ -273,7 +278,6 @@ export default function App() {
     if (selectedGameId) {
       setMyGames(prev => prev.filter(g => g.id !== selectedGameId));
     }
-    setHasCreatedGame(false);
     setCreatedGameData(null);
     setCurrentScreen('history');
     setActiveTab('home');
@@ -293,7 +297,7 @@ export default function App() {
   const handleParticipantFeedbackComplete = () => {
     // Remove from joined games
     setJoinedGames([]);
-    setCreatedGameData(null);
+    setJoinedGameData(null);
     setSelectedGameId(null);
     setParticipantFeedbackData(null);
     setCurrentScreen('history');
@@ -322,6 +326,14 @@ export default function App() {
     toast.success('Location access granted');
   };
 
+  const handleGameComplete = () => {
+    // Clear both created and joined game data when game finishes
+    setCreatedGameData(null);
+    setJoinedGameData(null);
+    setJoinedGames([]);
+    setSelectedGameId(null);
+  };
+
   const showMainNavigation = isAuthenticated && [
     'home',
     'leaderboard',
@@ -335,6 +347,10 @@ export default function App() {
   ].includes(currentScreen);
 
   const unreadMessages = 7; // Mock unread count
+  
+  // Determine current game data and isHost status
+  const currentGameData = createdGameData || joinedGameData;
+  const isHostingGame = !!createdGameData;
 
   return (
     <div className="size-full flex items-center justify-center bg-gray-100">
@@ -388,16 +404,16 @@ export default function App() {
         />
       )}
 
-      {currentScreen === 'queue' && createdGameData && (
+      {currentScreen === 'queue' && currentGameData && (
         <QueueScreen 
-          gameData={createdGameData}
-          isHost={hasCreatedGame}
+          gameData={currentGameData}
+          isHost={isHostingGame}
           onBack={() => {
             setCurrentScreen('home');
             setActiveTab('home');
           }}
           onLeaveGame={(gameId) => {
-            if (hasCreatedGame) {
+            if (isHostingGame) {
               // If host, cancel the game
               handleGameCancel();
             } else {
@@ -408,6 +424,7 @@ export default function App() {
             }
           }}
           onFinishGame={handleParticipantFinishGame}
+          onGameComplete={handleGameComplete}
         />
       )}
 
@@ -421,7 +438,7 @@ export default function App() {
         />
       )}
 
-      {currentScreen === 'create' && !hasCreatedGame && (
+      {currentScreen === 'create' && !createdGameData && !joinedGameData && (
         <CreateGameScreen 
           onCreateGame={handleCreateGame}
           isVerified={userData.isVerified}
@@ -575,7 +592,7 @@ export default function App() {
           onTabChange={handleTabChange}
           unreadMessages={unreadMessages}
           hasJoinedGames={joinedGames.length > 0}
-          hasCreatedGame={hasCreatedGame}
+          hasCreatedGame={!!createdGameData}
         />
       )}
       
