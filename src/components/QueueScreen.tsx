@@ -69,7 +69,6 @@ const reportReasonsArray = [
   'Other'
 ];
 
-// Mock team members
 const mockTeamMembers: TeamMember[] = [
   { id: 'tm1', name: 'Sarah Chen', avatar: '', skillLevel: 'Elite', online: true },
   { id: 'tm2', name: 'Mike Rodriguez', avatar: '', skillLevel: 'Novice', online: true },
@@ -109,6 +108,7 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
   const [newMessage, setNewMessage] = useState('');
   const [allReadyMessage, setAllReadyMessage] = useState(false);
   const [hostStarting, setHostStarting] = useState(false);
+  const [showRewardScreen, setShowRewardScreen] = useState(false);
 
   useEffect(() => {
     if (gameData) {
@@ -116,11 +116,9 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
     }
   }, [gameData?.maxPlayers]);
 
-  // Auto-ready simulation after 4 seconds when user clicks ready
   useEffect(() => {
     if (gameState === 'waiting' && players.length > 0 && userReady) {
       const autoReadyTimer = setTimeout(() => {
-        // Auto-ready all other players silently
         const updatedPlayers = players.map(p => ({ ...p, ready: true }));
         setPlayers(updatedPlayers);
         setReadyCount(players.length);
@@ -132,7 +130,6 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
     }
   }, [gameState, players, userReady]);
 
-  // Auto-start game when all players are ready (simulates host action)
   useEffect(() => {
     if (allReadyMessage && readyCount === players.length && players.length > 0 && gameState === 'waiting') {
       const autoStartTimer = setTimeout(() => {
@@ -140,18 +137,29 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
         toast.success('🎮 Host is starting the game...');
         
         setTimeout(() => {
-          // Simulate initial score being set by system
           setTeam1Score('15');
           setTeam2Score('12');
           setGameState('vote-score');
           setHostStarting(false);
           toast.success('Game started! Vote on the score...');
         }, 1000);
-      }, 2000); // 2 second delay after all ready
+      }, 2000);
       
       return () => clearTimeout(autoStartTimer);
     }
   }, [allReadyMessage, readyCount, players.length, gameState]);
+
+  useEffect(() => {
+    if (gameState === 'rewards') {
+      const rewardsTimer = setTimeout(() => {
+        setShowRewardScreen(true);
+        onRewardsEarned?.(50, 5);
+      }, 1000);
+      return () => clearTimeout(rewardsTimer);
+    } else {
+      setShowRewardScreen(false);
+    }
+  }, [gameState, onRewardsEarned]);
 
   const initializePlayers = () => {
     if (!gameData) return;
@@ -195,7 +203,6 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
     if (!userReady) {
       setUserReady(true);
       setReadyCount(prev => prev + 1);
-      // Update current user's ready status
       setPlayers(prev => prev.map(p => 
         p.isCurrentUser ? { ...p, ready: true } : p
       ));
@@ -229,7 +236,6 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
       toast.error(`${member.name} is offline`);
       return;
     }
-    // Add to invited set
     setInvitedMembers(prev => new Set([...prev, member.id]));
     toast.success(`Invitation sent to ${member.name}!`);
   };
@@ -237,12 +243,10 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
   const handleLeaveGame = () => {
     if (gameData) {
       setShowLeaveConfirmModal(false);
-      // Clear game state
       setUserReady(false);
       setPlayers([]);
       setReadyCount(0);
       setChatMessages([]);
-      // Call the leave callback and then go back
       onLeaveGame?.(gameData.id);
       onGameComplete?.();
       onBack();
@@ -280,9 +284,8 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
       setVotesDisapproved(prev => prev + 1);
       toast.info('You disagree with the score. You will need to enter the correct score.');
       
-      // Simulate other votes coming in (majority disagree)
       setTimeout(() => {
-        setVotesDisapproved(players.length - 1); // Most disagree
+        setVotesDisapproved(players.length - 1);
         toast.warning('Majority disagrees! Need to re-enter score...');
         setGameState('rescore');
       }, 1500);
@@ -295,7 +298,6 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
       return;
     }
     
-    // Reset votes and simulate new vote
     setVotesApproved(0);
     setVotesDisapproved(0);
     setHasUserVoted(false);
@@ -303,7 +305,6 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
     setGameState('revote-score');
     toast.info('New score submitted. Players are voting again...');
 
-    // Simulate votes with majority approval this time
     let approveCount = 0;
     const voteInterval = setInterval(() => {
       approveCount++;
@@ -336,9 +337,7 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
     if (currentRatingIndex < players.length - 1) {
       setCurrentRatingIndex(prev => prev + 1);
     } else {
-      // All players rated - show rewards
       setGameState('rewards');
-      toast.success('All ratings submitted! Calculating rewards...');
     }
   };
 
@@ -354,7 +353,6 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
   };
 
   const handleReturnToMenu = () => {
-    // Clear game and return to home - chat deleted after game
     setChatMessages([]);
     onGameComplete?.();
     onBack();
@@ -399,20 +397,12 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
 
   const teamAPlayers = players.filter(p => p.team === 1);
   const teamBPlayers = players.filter(p => p.team === 2);
-
-  // Default coordinates (example: San Francisco)
   const gameLat = gameData?.latitude || 37.7749;
   const gameLng = gameData?.longitude || -122.4194;
 
-  // REWARDS SCREEN
-  if (gameState === 'rewards') {
+  if (showRewardScreen && gameState === 'rewards') {
     const points = 50;
     const reliability = 5;
-    
-    useEffect(() => {
-      // Trigger reward callback
-      onRewardsEarned?.(points, reliability);
-    }, []);
 
     return (
       <div className="h-screen w-full max-w-md mx-auto bg-gray-50 flex flex-col">
@@ -448,6 +438,7 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
 
             <Button
               onClick={() => {
+                setShowRewardScreen(false);
                 setGameState('completed');
                 handleReturnToMenu();
               }}
@@ -461,7 +452,6 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
     );
   }
 
-  // VOTE SCORE SCREEN
   if (gameState === 'vote-score') {
     return (
       <div className="h-screen w-full max-w-md mx-auto bg-gray-50 flex flex-col">
@@ -522,7 +512,6 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
     );
   }
 
-  // RESCORE SCREEN
   if (gameState === 'rescore') {
     return (
       <div className="h-screen w-full max-w-md mx-auto bg-gray-50 flex flex-col">
@@ -587,7 +576,6 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
     );
   }
 
-  // REVOTE SCORE SCREEN
   if (gameState === 'revote-score') {
     return (
       <div className="h-screen w-full max-w-md mx-auto bg-gray-50 flex flex-col">
@@ -608,11 +596,7 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
                 {players.map((player, index) => (
                   <div key={player.id} className="flex flex-col items-center gap-1">
                     <Badge
-                      className={`px-3 py-1.5 text-xs font-semibold ${
-                        index < votesApproved
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-gray-100 text-gray-600'
-                      }`}
+                      className={`px-3 py-1.5 text-xs font-semibold ${index < votesApproved ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}
                     >
                       {player.name}
                     </Badge>
@@ -635,7 +619,6 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
     );
   }
 
-  // RATING SCREEN
   if (gameState === 'rating') {
     const currentPlayer = players[currentRatingIndex];
     const ratedCount = Object.keys(playerRatings).length;
@@ -671,11 +654,7 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
                     className="transition-transform hover:scale-110"
                   >
                     <Star
-                      className={`w-10 h-10 ${
-                        star <= currentRating
-                          ? 'fill-yellow-400 text-yellow-400'
-                          : 'text-gray-300'
-                      }`}
+                      className={`w-10 h-10 ${star <= currentRating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`}
                     />
                   </button>
                 ))}
@@ -727,7 +706,6 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
           </div>
         </ScrollArea>
 
-        {/* Report Modal */}
         {showReportModal && (
           <div className="fixed inset-0 bg-black/50 flex items-end max-w-md mx-auto z-50">
             <div className="bg-white w-full rounded-t-3xl p-6 shadow-2xl animate-in slide-in-from-bottom max-h-[80vh] overflow-y-auto">
@@ -793,7 +771,6 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
     );
   }
 
-  // COMPLETED SCREEN
   if (gameState === 'completed') {
     return (
       <div className="h-screen w-full max-w-md mx-auto bg-gray-50 flex flex-col">
@@ -822,7 +799,6 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
     );
   }
 
-  // WAITING SCREEN
   if (!gameData) {
     return (
       <div className="h-screen w-full max-w-md mx-auto bg-gray-50 flex flex-col pb-20">
@@ -850,13 +826,9 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
 
   return (
     <div className="h-screen w-full max-w-md mx-auto bg-gray-50 flex flex-col pb-24">
-      {/* Header with Game Status */}
       <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-green-600 pt-8 pb-8 px-6 rounded-b-3xl">
         <div className="flex items-center gap-3 mb-4">
-          <button
-            onClick={onBack}
-            className="bg-white/20 backdrop-blur-sm p-2.5 rounded-xl hover:bg-white/30 transition"
-          >
+          <button onClick={onBack} className="bg-white/20 backdrop-blur-sm p-2.5 rounded-xl hover:bg-white/30 transition">
             <ArrowLeft className="w-5 h-5 text-white" />
           </button>
           <div className="flex-1">
@@ -870,14 +842,10 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
           )}
         </div>
 
-        {/* Game Status Card */}
         <div className="bg-white/15 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <button 
-                onClick={() => setShowMapModal(true)}
-                className="flex items-center gap-2 text-white/90 hover:text-white transition-colors"
-              >
+              <button onClick={() => setShowMapModal(true)} className="flex items-center gap-2 text-white/90 hover:text-white transition-colors">
                 <MapPin className="w-4 h-4" />
                 <span className="text-sm">{gameData.location}</span>
               </button>
@@ -893,10 +861,8 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
         </div>
       </div>
 
-      {/* Content */}
       <ScrollArea className="flex-1 px-6 mt-6">
         <div className="space-y-4 pb-40">
-          {/* Status Message */}
           <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4">
             <div className="flex items-start gap-3">
               <div className="mt-0.5">
@@ -911,7 +877,6 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
             </div>
           </div>
 
-          {/* All Ready Message - Shows briefly before host starts game */}
           {allReadyMessage && readyCount === players.length && gameState === 'waiting' && (
             <div className="bg-green-50 border-2 border-green-300 rounded-2xl p-4 animate-pulse">
               <div className="flex items-start gap-3">
@@ -926,7 +891,6 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
             </div>
           )}
 
-          {/* Host Starting Message */}
           {hostStarting && (
             <div className="bg-purple-50 border-2 border-purple-300 rounded-2xl p-4 animate-bounce">
               <div className="flex items-start gap-3">
@@ -941,22 +905,13 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
             </div>
           )}
 
-          {/* Action Buttons */}
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
-              <Button
-                onClick={() => setShowMapModal(true)}
-                variant="outline"
-                className="rounded-2xl py-3 font-semibold border-green-300 text-green-700 hover:bg-green-50 flex items-center justify-center gap-2"
-              >
+              <Button onClick={() => setShowMapModal(true)} variant="outline" className="rounded-2xl py-3 font-semibold border-green-300 text-green-700 hover:bg-green-50 flex items-center justify-center gap-2">
                 <Map className="w-5 h-5" />
                 Location
               </Button>
-              <Button
-                onClick={() => setShowGroupChat(true)}
-                variant="outline"
-                className="rounded-2xl py-3 font-semibold border-blue-300 text-blue-700 hover:bg-blue-50 flex items-center justify-center gap-2 relative"
-              >
+              <Button onClick={() => setShowGroupChat(true)} variant="outline" className="rounded-2xl py-3 font-semibold border-blue-300 text-blue-700 hover:bg-blue-50 flex items-center justify-center gap-2 relative">
                 <MessageCircle className="w-5 h-5" />
                 Chat
                 {chatMessages.length > 0 && (
@@ -967,48 +922,26 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
               </Button>
             </div>
 
-            <Button
-              onClick={() => setShowInviteModal(true)}
-              variant="outline"
-              className="w-full rounded-2xl py-3 font-semibold border-purple-300 text-purple-700 hover:bg-purple-50 flex items-center justify-center gap-2"
-            >
+            <Button onClick={() => setShowInviteModal(true)} variant="outline" className="w-full rounded-2xl py-3 font-semibold border-purple-300 text-purple-700 hover:bg-purple-50 flex items-center justify-center gap-2">
               <UserPlus className="w-5 h-5" />
               Invite Team Members
             </Button>
 
             {!isHost && (
-              <Button
-                onClick={handleSwitchTeam}
-                disabled={userReady}
-                variant="outline"
-                className="w-full rounded-2xl py-3 font-semibold border-gray-300"
-              >
+              <Button onClick={handleSwitchTeam} disabled={userReady} variant="outline" className="w-full rounded-2xl py-3 font-semibold border-gray-300">
                 Switch Team
               </Button>
             )}
 
-            <Button
-              onClick={handleReady}
-              disabled={hostStarting}
-              className={`w-full rounded-2xl py-3 font-semibold text-white ${
-                userReady
-                  ? 'bg-green-600 hover:bg-green-700'
-                  : 'bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700'
-              } disabled:opacity-50`}
-            >
+            <Button onClick={handleReady} disabled={hostStarting} className={`w-full rounded-2xl py-3 font-semibold text-white ${userReady ? 'bg-green-600 hover:bg-green-700' : 'bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700'} disabled:opacity-50`}>
               {userReady ? '✓ Ready - Starting soon...' : "I'm Ready!"}
             </Button>
 
-            <Button
-              onClick={() => setShowLeaveConfirmModal(true)}
-              variant="outline"
-              className="w-full rounded-2xl py-3 font-semibold border-red-200 text-red-600 hover:bg-red-50"
-            >
+            <Button onClick={() => setShowLeaveConfirmModal(true)} variant="outline" className="w-full rounded-2xl py-3 font-semibold border-red-200 text-red-600 hover:bg-red-50">
               Leave Game
             </Button>
           </div>
 
-          {/* Team 1 */}
           <div className="bg-white rounded-2xl shadow-lg p-4 mt-2">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
@@ -1019,45 +952,18 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
             </div>
             <div className="space-y-2">
               {teamAPlayers.map((player) => (
-                <div
-                  key={player.id}
-                  className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors ${
-                    player.isCurrentUser
-                      ? 'bg-blue-50 border border-blue-200'
-                      : 'bg-gray-50'
-                  } ${kickingPlayerId === player.id ? 'opacity-50' : ''}`}
-                >
-                  <button
-                    onClick={() => {
-                      if (!player.isCurrentUser) {
-                        setSelectedPlayer({
-                          name: player.name,
-                          username: player.name.toLowerCase().replace(' ', '_'),
-                          userId: `SP2025-${1000 + parseInt(player.id.replace('player-', '') || '0')}`,
-                          isVerified: player.verified,
-                          rating: 4.5,
-                          gamesPlayed: 20,
-                          reliabilityScore: 88,
-                        });
-                      }
-                    }}
-                    disabled={player.isCurrentUser}
-                    className="flex items-center gap-3 flex-1 text-left"
-                  >
-                    <Avatar className="size-9 flex-shrink-0">
-                      <AvatarFallback className="bg-gradient-to-br from-blue-500 to-green-500 text-white text-xs font-semibold">
-                        {player.name.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-sm text-gray-900 font-medium truncate">{player.name}</p>
-                      </div>
-                      <Badge className={`${getSkillBadgeColor(player.skillLevel)} text-xs font-semibold mt-1`}>
-                        {player.skillLevel}
-                      </Badge>
-                    </div>
-                  </button>
+                <div key={player.id} className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors ${player.isCurrentUser ? 'bg-blue-50 border border-blue-200' : 'bg-gray-50'} ${kickingPlayerId === player.id ? 'opacity-50' : ''}`}>
+                  <Avatar className="size-9 flex-shrink-0">
+                    <AvatarFallback className="bg-gradient-to-br from-blue-500 to-green-500 text-white text-xs font-semibold">
+                      {player.name.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-gray-900 font-medium truncate">{player.name}</p>
+                    <Badge className={`${getSkillBadgeColor(player.skillLevel)} text-xs font-semibold mt-1`}>
+                      {player.skillLevel}
+                    </Badge>
+                  </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     {player.isCurrentUser ? (
                       <Badge className="bg-blue-600 text-white text-xs">You</Badge>
@@ -1066,22 +972,12 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
                     ) : (
                       <Badge className="bg-gray-100 text-gray-600 text-xs font-semibold">Waiting</Badge>
                     )}
-                    {isHost && !player.isCurrentUser && (
-                      <button
-                        onClick={() => handleKickPlayer(player.id, player.name)}
-                        disabled={kickingPlayerId === player.id}
-                        className="p-1.5 hover:bg-red-100 rounded-lg transition-colors text-red-600 disabled:opacity-50"
-                      >
-                        <UserMinus className="w-4 h-4" />
-                      </button>
-                    )}
                   </div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Team 2 */}
           <div className="bg-white rounded-2xl shadow-lg p-4">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
@@ -1092,45 +988,18 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
             </div>
             <div className="space-y-2">
               {teamBPlayers.map((player) => (
-                <div
-                  key={player.id}
-                  className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors ${
-                    player.isCurrentUser
-                      ? 'bg-blue-50 border border-blue-200'
-                      : 'bg-gray-50'
-                  } ${kickingPlayerId === player.id ? 'opacity-50' : ''}`}
-                >
-                  <button
-                    onClick={() => {
-                      if (!player.isCurrentUser) {
-                        setSelectedPlayer({
-                          name: player.name,
-                          username: player.name.toLowerCase().replace(' ', '_'),
-                          userId: `SP2025-${1000 + parseInt(player.id.replace('player-', '') || '0')}`,
-                          isVerified: player.verified,
-                          rating: 4.5,
-                          gamesPlayed: 20,
-                          reliabilityScore: 88,
-                        });
-                      }
-                    }}
-                    disabled={player.isCurrentUser}
-                    className="flex items-center gap-3 flex-1 text-left"
-                  >
-                    <Avatar className="size-9 flex-shrink-0">
-                      <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white text-xs font-semibold">
-                        {player.name.charAt(0)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-sm text-gray-900 font-medium truncate">{player.name}</p>
-                      </div>
-                      <Badge className={`${getSkillBadgeColor(player.skillLevel)} text-xs font-semibold mt-1`}>
-                        {player.skillLevel}
-                      </Badge>
-                    </div>
-                  </button>
+                <div key={player.id} className={`w-full flex items-center gap-3 p-3 rounded-xl transition-colors ${player.isCurrentUser ? 'bg-blue-50 border border-blue-200' : 'bg-gray-50'} ${kickingPlayerId === player.id ? 'opacity-50' : ''}`}>
+                  <Avatar className="size-9 flex-shrink-0">
+                    <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white text-xs font-semibold">
+                      {player.name.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-gray-900 font-medium truncate">{player.name}</p>
+                    <Badge className={`${getSkillBadgeColor(player.skillLevel)} text-xs font-semibold mt-1`}>
+                      {player.skillLevel}
+                    </Badge>
+                  </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     {player.isCurrentUser ? (
                       <Badge className="bg-blue-600 text-white text-xs">You</Badge>
@@ -1138,15 +1007,6 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
                       <Badge className="bg-green-100 text-green-700 text-xs font-semibold">Ready</Badge>
                     ) : (
                       <Badge className="bg-gray-100 text-gray-600 text-xs font-semibold">Waiting</Badge>
-                    )}
-                    {isHost && !player.isCurrentUser && (
-                      <button
-                        onClick={() => handleKickPlayer(player.id, player.name)}
-                        disabled={kickingPlayerId === player.id}
-                        className="p-1.5 hover:bg-red-100 rounded-lg transition-colors text-red-600 disabled:opacity-50"
-                      >
-                        <UserMinus className="w-4 h-4" />
-                      </button>
                     )}
                   </div>
                 </div>
@@ -1156,24 +1016,16 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
         </div>
       </ScrollArea>
 
-      {/* Leave Confirm Modal */}
       {showLeaveConfirmModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center max-w-md mx-auto z-50">
           <div className="bg-white rounded-3xl shadow-2xl p-6 mx-4">
             <h3 className="text-gray-900 font-bold text-lg mb-2">Leave Game?</h3>
             <p className="text-gray-600 text-sm mb-6">Are you sure you want to leave this game? You won't be able to rejoin.</p>
             <div className="flex gap-3">
-              <Button
-                onClick={() => setShowLeaveConfirmModal(false)}
-                variant="outline"
-                className="flex-1 rounded-2xl py-3 font-semibold border-gray-300"
-              >
+              <Button onClick={() => setShowLeaveConfirmModal(false)} variant="outline" className="flex-1 rounded-2xl py-3 font-semibold border-gray-300">
                 Cancel
               </Button>
-              <Button
-                onClick={handleLeaveGame}
-                className="flex-1 rounded-2xl py-3 font-semibold text-white bg-red-600 hover:bg-red-700"
-              >
+              <Button onClick={handleLeaveGame} className="flex-1 rounded-2xl py-3 font-semibold text-white bg-red-600 hover:bg-red-700">
                 Leave
               </Button>
             </div>
@@ -1181,7 +1033,6 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
         </div>
       )}
 
-      {/* Map Modal */}
       {showMapModal && (
         <div className="fixed inset-0 bg-black/50 flex items-end max-w-md mx-auto z-50">
           <div className="bg-white w-full rounded-t-3xl shadow-2xl animate-in slide-in-from-bottom max-h-[85vh] flex flex-col">
@@ -1195,22 +1046,10 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
               </button>
             </div>
             <div className="flex-1 relative overflow-hidden">
-              <iframe
-                width="100%"
-                height="100%"
-                frameBorder="0"
-                style={{ border: 0 }}
-                src={`https://www.openstreetmap.org/export/embed.html?bbox=${gameLng - 0.01},${gameLat - 0.01},${gameLng + 0.01},${gameLat + 0.01}&layer=mapnik&marker=${gameLat},${gameLng}`}
-                allowFullScreen
-              />
+              <iframe width="100%" height="100%" frameBorder="0" style={{ border: 0 }} src={`https://www.openstreetmap.org/export/embed.html?bbox=${gameLng - 0.01},${gameLat - 0.01},${gameLng + 0.01},${gameLat + 0.01}&layer=mapnik&marker=${gameLat},${gameLng}`} allowFullScreen />
             </div>
             <div className="p-6 border-t">
-              <a
-                href={`https://www.google.com/maps/search/?api=1&query=${gameLat},${gameLng}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-full block text-center bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 text-white py-3 rounded-2xl font-semibold transition-colors"
-              >
+              <a href={`https://www.google.com/maps/search/?api=1&query=${gameLat},${gameLng}`} target="_blank" rel="noopener noreferrer" className="w-full block text-center bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 text-white py-3 rounded-2xl font-semibold transition-colors">
                 Open in Google Maps
               </a>
             </div>
@@ -1218,7 +1057,6 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
         </div>
       )}
 
-      {/* Group Chat Modal */}
       {showGroupChat && (
         <div className="fixed inset-0 bg-black/50 flex items-end max-w-md mx-auto z-50">
           <div className="bg-white w-full rounded-t-3xl shadow-2xl animate-in slide-in-from-bottom max-h-[85vh] flex flex-col">
@@ -1231,8 +1069,6 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
                 <X className="w-6 h-6" />
               </button>
             </div>
-
-            {/* Messages */}
             <ScrollArea className="flex-1 px-6 py-4">
               <div className="space-y-3 pb-4">
                 {chatMessages.map((msg) => (
@@ -1244,18 +1080,10 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
                         </AvatarFallback>
                       </Avatar>
                     )}
-                    <div className={`max-w-xs ${
-                      msg.playerId === 'current-user'
-                        ? 'bg-blue-600 text-white rounded-3xl rounded-tr-none'
-                        : 'bg-gray-100 text-gray-900 rounded-3xl rounded-tl-none'
-                    } px-4 py-2.5`}>
-                      {msg.playerId !== 'current-user' && (
-                        <p className="text-xs font-semibold mb-1 opacity-70">{msg.playerName}</p>
-                      )}
+                    <div className={`max-w-xs ${msg.playerId === 'current-user' ? 'bg-blue-600 text-white rounded-3xl rounded-tr-none' : 'bg-gray-100 text-gray-900 rounded-3xl rounded-tl-none'} px-4 py-2.5`}>
+                      {msg.playerId !== 'current-user' && <p className="text-xs font-semibold mb-1 opacity-70">{msg.playerName}</p>}
                       <p className="text-sm">{msg.message}</p>
-                      <p className={`text-xs mt-1 ${
-                        msg.playerId === 'current-user' ? 'text-blue-100' : 'text-gray-500'
-                      }`}>
+                      <p className={`text-xs mt-1 ${msg.playerId === 'current-user' ? 'text-blue-100' : 'text-gray-500'}`}>
                         {formatTime(msg.timestamp)}
                       </p>
                     </div>
@@ -1263,22 +1091,10 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
                 ))}
               </div>
             </ScrollArea>
-
-            {/* Message Input */}
             <div className="border-t p-4 sticky bottom-0 bg-white">
               <div className="flex gap-2">
-                <Input
-                  type="text"
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                  placeholder="Type a message..."
-                  className="rounded-2xl px-4 py-2.5 flex-1"
-                />
-                <Button
-                  onClick={handleSendMessage}
-                  className="rounded-2xl px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center"
-                >
+                <Input type="text" value={newMessage} onChange={(e) => setNewMessage(e.target.value)} onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()} placeholder="Type a message..." className="rounded-2xl px-4 py-2.5 flex-1" />
+                <Button onClick={handleSendMessage} className="rounded-2xl px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center">
                   <Send className="w-4 h-4" />
                 </Button>
               </div>
@@ -1288,7 +1104,6 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
         </div>
       )}
 
-      {/* Invite Team Members Modal */}
       {showInviteModal && (
         <div className="fixed inset-0 bg-black/50 flex items-end max-w-md mx-auto z-50">
           <div className="bg-white w-full rounded-t-3xl shadow-2xl animate-in slide-in-from-bottom max-h-[85vh] flex flex-col">
@@ -1306,10 +1121,7 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
                 {mockTeamMembers.map((member) => {
                   const isInvited = invitedMembers.has(member.id);
                   return (
-                    <div
-                      key={member.id}
-                      className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors"
-                    >
+                    <div key={member.id} className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors">
                       <Avatar className="size-10 flex-shrink-0">
                         <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-500 text-white text-sm font-semibold">
                           {member.name.charAt(0)}
@@ -1318,32 +1130,14 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <p className="text-sm text-gray-900 font-medium truncate">{member.name}</p>
-                          {member.online && (
-                            <div className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" />
-                          )}
+                          {member.online && <div className="w-2 h-2 rounded-full bg-green-500 flex-shrink-0" />}
                         </div>
-                        <Badge className={`${
-                          member.skillLevel === 'Casual' ? 'bg-blue-100 text-blue-700' :
-                          member.skillLevel === 'Novice' ? 'bg-purple-100 text-purple-700' :
-                          'bg-yellow-100 text-yellow-700'
-                        } text-xs font-semibold mt-1`}>
+                        <Badge className={`${member.skillLevel === 'Casual' ? 'bg-blue-100 text-blue-700' : member.skillLevel === 'Novice' ? 'bg-purple-100 text-purple-700' : 'bg-yellow-100 text-yellow-700'} text-xs font-semibold mt-1`}>
                           {member.skillLevel}
                         </Badge>
                       </div>
-                      <button
-                        onClick={() => handleInviteTeamMember(member)}
-                        disabled={!member.online || isInvited}
-                        className={`p-2 rounded-lg transition-colors flex-shrink-0 ${
-                          isInvited
-                            ? 'bg-green-100 text-green-600 hover:bg-green-200'
-                            : 'bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed'
-                        } ${isInvited ? 'animate-pulse' : ''}`}
-                      >
-                        {isInvited ? (
-                          <CheckCircle2 className="w-4 h-4" />
-                        ) : (
-                          <Send className="w-4 h-4" />
-                        )}
+                      <button onClick={() => handleInviteTeamMember(member)} disabled={!member.online || isInvited} className={`p-2 rounded-lg transition-colors flex-shrink-0 ${isInvited ? 'bg-green-100 text-green-600 hover:bg-green-200' : 'bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed'} ${isInvited ? 'animate-pulse' : ''}`}>
+                        {isInvited ? <CheckCircle2 className="w-4 h-4" /> : <Send className="w-4 h-4" />}
                       </button>
                     </div>
                   );
@@ -1351,25 +1145,12 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
               </div>
             </ScrollArea>
             <div className="p-6 border-t">
-              <Button
-                onClick={() => setShowInviteModal(false)}
-                variant="outline"
-                className="w-full rounded-2xl py-3 font-semibold"
-              >
+              <Button onClick={() => setShowInviteModal(false)} variant="outline" className="w-full rounded-2xl py-3 font-semibold">
                 Done
               </Button>
             </div>
           </div>
         </div>
-      )}
-
-      {/* Mini Profile */}
-      {selectedPlayer && (
-        <MiniProfileCard
-          user={selectedPlayer}
-          onClose={() => setSelectedPlayer(null)}
-          onViewFullProfile={() => setSelectedPlayer(null)}
-        />
       )}
     </div>
   );
