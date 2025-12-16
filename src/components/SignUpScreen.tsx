@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import { User, Mail, Lock, MapPin, Calendar, Trophy, Upload, ArrowLeft } from 'lucide-react';
+import { User, Mail, Lock, MapPin, Calendar, Trophy, Upload, ArrowLeft, Camera, Eye } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Checkbox } from './ui/checkbox';
 import { ScrollArea } from './ui/scroll-area';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
+import { FaceVerificationDialog } from './FaceVerificationDialog';
+import { toast } from 'sonner';
 
 interface SignUpScreenProps {
   onSignUp: (data: any) => void;
@@ -29,6 +31,8 @@ export function SignUpScreen({ onSignUp, onBack }: SignUpScreenProps) {
     agreedToTerms: false,
   });
   const [idUploaded, setIdUploaded] = useState(false);
+  const [faceVerified, setFaceVerified] = useState(false);
+  const [showFaceVerification, setShowFaceVerification] = useState(false);
 
   const toggleSport = (sport: string) => {
     setFormData(prev => ({
@@ -39,17 +43,46 @@ export function SignUpScreen({ onSignUp, onBack }: SignUpScreenProps) {
     }));
   };
 
+  const handleIdUpload = () => {
+    // Simulate ID upload
+    setIdUploaded(true);
+    toast.success('ID uploaded successfully!');
+    
+    // After ID upload, prompt for face verification
+    setTimeout(() => {
+      setShowFaceVerification(true);
+    }, 500);
+  };
+
+  const handleFaceVerified = () => {
+    setFaceVerified(true);
+    toast.success('Face verified! You can now create your account.');
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match!');
+      toast.error('Passwords do not match!');
       return;
     }
+    
     if (!idUploaded) {
-      alert('Please upload a valid ID to continue');
+      toast.error('Please upload a valid ID to continue');
       return;
     }
-    onSignUp({ ...formData, isVerified: idUploaded });
+    
+    if (!faceVerified) {
+      toast.error('Please complete face verification');
+      return;
+    }
+    
+    if (!formData.agreedToTerms) {
+      toast.error('Please agree to the terms and conditions');
+      return;
+    }
+    
+    onSignUp({ ...formData, isVerified: true, faceVerified: true });
   };
 
   return (
@@ -228,28 +261,69 @@ export function SignUpScreen({ onSignUp, onBack }: SignUpScreenProps) {
                 <Label className="text-gray-700">ID Verification</Label>
                 <span className="text-red-500 text-sm font-semibold">*Required</span>
               </div>
-              <div className={`border-2 ${idUploaded ? 'border-green-300 bg-green-50' : 'border-dashed border-gray-300 bg-gray-50'} rounded-xl p-6 text-center`}>
-                {!idUploaded ? (
+              <div className={`border-2 ${
+                faceVerified 
+                  ? 'border-green-300 bg-green-50' 
+                  : idUploaded 
+                  ? 'border-blue-300 bg-blue-50'
+                  : 'border-dashed border-gray-300 bg-gray-50'
+              } rounded-xl p-6 text-center transition-all`}>
+                {!idUploaded && !faceVerified ? (
                   <>
                     <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                     <p className="text-sm text-gray-600 mb-1">Upload valid ID</p>
-                    <p className="text-xs text-gray-500">Required to create and join games</p>
+                    <p className="text-xs text-gray-500 mb-3">Required to create and join games</p>
                     <Button
                       type="button"
-                      onClick={() => setIdUploaded(true)}
+                      onClick={handleIdUpload}
                       variant="outline"
-                      className="mt-3 rounded-xl"
+                      className="mt-2 rounded-xl"
                     >
+                      <Upload className="w-4 h-4 mr-2" />
                       Choose File
                     </Button>
                   </>
+                ) : idUploaded && !faceVerified ? (
+                  <>
+                    <Eye className="w-8 h-8 text-blue-600 mx-auto mb-2" />
+                    <p className="text-sm text-blue-700 font-semibold mb-1">ID Uploaded!</p>
+                    <p className="text-xs text-blue-600 mb-3">Now verify your face to continue</p>
+                    <Button
+                      type="button"
+                      onClick={() => setShowFaceVerification(true)}
+                      className="mt-2 rounded-xl bg-blue-600 hover:bg-blue-700"
+                    >
+                      <Camera className="w-4 h-4 mr-2" />
+                      Verify Face
+                    </Button>
+                  </>
                 ) : (
-                  <div className="flex items-center justify-center gap-2 text-green-600">
-                    <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">✓</div>
-                    <span className="text-sm font-semibold">ID Verified</span>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-center gap-2 text-green-600">
+                      <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">✓</div>
+                      <span className="text-sm font-semibold">Fully Verified</span>
+                    </div>
+                    <div className="flex items-center justify-center gap-4 text-xs text-green-700">
+                      <div className="flex items-center gap-1">
+                        <Upload className="w-3 h-3" />
+                        <span>ID</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Eye className="w-3 h-3" />
+                        <span>Face</span>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
+              
+              {faceVerified && (
+                <div className="bg-green-50 border border-green-200 rounded-xl p-3">
+                  <p className="text-xs text-green-700 text-center">
+                    ✓ Your identity has been verified. You can now create your account!
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="flex items-start gap-3 pt-2">
@@ -288,11 +362,11 @@ export function SignUpScreen({ onSignUp, onBack }: SignUpScreenProps) {
                         </section>
                         <section>
                           <h3 className="text-gray-900 mb-2">4. Verification</h3>
-                          <p className="text-gray-600">ID verification is required to create and join games. Verified users are trusted by the community.</p>
+                          <p className="text-gray-600">ID and face verification are required to create and join games. Verified users are trusted by the community.</p>
                         </section>
                         <section>
                           <h3 className="text-gray-900 mb-2">5. Privacy Policy</h3>
-                          <p className="text-gray-600">We collect and use your data to provide our services. Your location data is used to show nearby games. Personal information is never shared with third parties without consent.</p>
+                          <p className="text-gray-600">We collect and use your data to provide our services. Your location data is used to show nearby games. Personal information is never shared with third parties without consent. Biometric data from face verification is encrypted and used solely for identity verification.</p>
                         </section>
                         <section>
                           <h3 className="text-gray-900 mb-2">6. Reporting & Safety</h3>
@@ -309,13 +383,21 @@ export function SignUpScreen({ onSignUp, onBack }: SignUpScreenProps) {
             <Button
               type="submit"
               className="w-full h-14 bg-gradient-to-r from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 rounded-2xl shadow-lg shadow-blue-500/30 mt-6"
-              disabled={!formData.agreedToTerms || !idUploaded}
+              disabled={!formData.agreedToTerms || !faceVerified}
             >
               Create Account
             </Button>
           </form>
         </div>
       </ScrollArea>
+
+      {/* Face Verification Dialog */}
+      <FaceVerificationDialog
+        isOpen={showFaceVerification}
+        onClose={() => setShowFaceVerification(false)}
+        onVerified={handleFaceVerified}
+        userName={formData.fullName || 'User'}
+      />
     </div>
   );
 }
