@@ -19,7 +19,7 @@ const mockTeamMembers = [
   { id: '1', name: 'John Doe', role: 'Admin', verified: true, gamesPlayed: 45, rating: 4.8 },
   { id: '2', name: 'Alex Chen', role: 'Member', verified: true, gamesPlayed: 32, rating: 4.7 },
   { id: '3', name: 'Sarah Miller', role: 'Member', verified: true, gamesPlayed: 28, rating: 4.9 },
-  { id: '4', name: 'Mike Johnson', role: 'Member', verified: false, gamesPlayed: 12, rating: 4.2 },
+  { id: '4', name: 'Mike Johnson', role: 'Member', verified: true, gamesPlayed: 12, rating: 4.2 },
   { id: '5', name: 'Emma Davis', role: 'Member', verified: true, gamesPlayed: 38, rating: 4.6 },
 ];
 
@@ -63,9 +63,9 @@ const mockTeamAchievements = [
 ];
 
 const suggestedTeams = [
-  { id: '4', name: 'City Runners', logo: '🏃', members: 15, sport: 'Running', rank: 5, level: 3, barangay: 'Brgy. San Pedro' },
-  { id: '5', name: 'Aqua Stars', logo: '🏊', members: 10, sport: 'Swimming', rank: 12, level: 2, barangay: 'Brgy. Bancao-Bancao' },
-  { id: '6', name: 'Net Masters', logo: '🎾', members: 8, sport: 'Tennis', rank: 8, level: 4, barangay: 'Brgy. Mandaragat' },
+  { id: '4', name: 'City Runners', logo: '🏃', members: 15, sport: 'Running', level: 3, barangay: 'Brgy. San Pedro' },
+  { id: '5', name: 'Aqua Stars', logo: '🏊', members: 10, sport: 'Swimming', level: 2, barangay: 'Brgy. Bancao-Bancao' },
+  { id: '6', name: 'Net Masters', logo: '🎾', members: 8, sport: 'Tennis', level: 4, barangay: 'Brgy. Mandaragat' },
 ];
 
 interface TeamChallenge {
@@ -82,8 +82,8 @@ interface TeamChallenge {
 const teamChallenges: TeamChallenge[] = [
   {
     id: '1',
-    title: 'Win 3 Verified Games',
-    description: 'Complete and verify 3 matches this week',
+    title: 'Win 3 Team Games',
+    description: 'Complete 3 matches with your team this week',
     type: 'weekly',
     expReward: 150,
     progress: 1,
@@ -102,13 +102,13 @@ const teamChallenges: TeamChallenge[] = [
   },
   {
     id: '3',
-    title: 'Recruit Verified Players',
-    description: 'Invite 2 verified players to join',
+    title: 'Active Team',
+    description: 'Play 5 games as a team this week',
     type: 'daily',
     expReward: 50,
-    progress: 1,
-    maxProgress: 2,
-    icon: '👥'
+    progress: 3,
+    maxProgress: 5,
+    icon: '🎮'
   },
 ];
 
@@ -116,7 +116,7 @@ const teamPerks = [
   { level: 1, name: 'Rookie', perks: ['Basic team features', 'Create team profile', 'Invite up to 15 members'], color: 'from-gray-400 to-gray-600' },
   { level: 2, name: 'Semi-Pro', perks: ['Custom banner', 'Team description', 'Up to 25 members'], color: 'from-green-400 to-green-600' },
   { level: 3, name: 'Pro Team', perks: ['Exclusive challenges', 'Team medals', 'Up to 50 members'], color: 'from-blue-400 to-blue-600' },
-  { level: 4, name: 'Elite Squad', perks: ['Double EXP from verified games', 'Priority matchmaking', 'Up to 100 members'], color: 'from-purple-400 to-purple-600' },
+  { level: 4, name: 'Elite Squad', perks: ['Double EXP from games', 'Priority matchmaking', 'Up to 100 members'], color: 'from-purple-400 to-purple-600' },
   { level: 5, name: 'Barangay Legend', perks: ['Featured on leaderboard', 'Invite-only matches', 'Unlimited members', 'Custom team badge'], color: 'from-yellow-400 to-orange-600' },
 ];
 
@@ -137,12 +137,10 @@ export function TeamsScreen() {
     maxMembers: number;
     sport: string;
     points: number;
-    rank: number;
     role: string;
     level: number;
     exp: number;
     maxExp: number;
-    teamCoins: number;
     barangay: string;
     avgRating: number;
   } | null>({
@@ -153,12 +151,10 @@ export function TeamsScreen() {
     maxMembers: 15,
     sport: 'Basketball',
     points: 2450,
-    rank: 3,
     role: 'Admin',
     level: 3,
     exp: 1250,
     maxExp: 2000,
-    teamCoins: 850,
     barangay: 'Brgy. San Pedro',
     avgRating: 4.6,
   });
@@ -197,13 +193,11 @@ export function TeamsScreen() {
       members: team.members,
       maxMembers: team.members + 5,
       sport: team.sport,
-      points: team.rank * 100,
-      rank: team.rank,
+      points: 1000,
       role: 'Member',
       level: team.level,
       exp: 500,
       maxExp: 1000 * team.level,
-      teamCoins: 200,
       barangay: team.barangay,
       avgRating: 4.5,
     });
@@ -297,7 +291,7 @@ export function TeamsScreen() {
             </div>
 
             {/* Team Stats */}
-            <div className="grid grid-cols-4 gap-3 mt-4">
+            <div className="grid grid-cols-3 gap-3 mt-4">
               <div className="text-center bg-white/10 backdrop-blur-sm rounded-xl p-2 border border-white/20">
                 <p className="text-white">{currentTeam.members}/{currentTeam.maxMembers}</p>
                 <p className="text-white/70 text-xs mt-0.5">Members</p>
@@ -307,12 +301,8 @@ export function TeamsScreen() {
                 <p className="text-white/70 text-xs mt-0.5">Points</p>
               </div>
               <div className="text-center bg-white/10 backdrop-blur-sm rounded-xl p-2 border border-white/20">
-                <p className="text-white">{currentTeam.teamCoins}</p>
-                <p className="text-white/70 text-xs mt-0.5">Coins</p>
-              </div>
-              <div className="text-center bg-white/10 backdrop-blur-sm rounded-xl p-2 border border-white/20">
-                <p className="text-white">#{currentTeam.rank}</p>
-                <p className="text-white/70 text-xs mt-0.5">Rank</p>
+                <p className="text-white">{currentTeam.avgRating.toFixed(1)}</p>
+                <p className="text-white/70 text-xs mt-0.5">Rating</p>
               </div>
             </div>
           </div>
@@ -320,7 +310,7 @@ export function TeamsScreen() {
           {/* Team Challenges Section */}
           <div className="px-6 mt-6">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-gray-900">Active Challenges</h3>
+              <h3 className="text-gray-900 font-semibold">Active Challenges</h3>
               <Badge variant="outline" className="text-xs">
                 {teamChallenges.filter(c => c.progress >= c.maxProgress).length}/{teamChallenges.length} Complete
               </Badge>
@@ -342,7 +332,7 @@ export function TeamsScreen() {
                       <div className="flex-1">
                         <div className="flex items-start justify-between mb-1">
                           <div>
-                            <h4 className="text-gray-900">{challenge.title}</h4>
+                            <h4 className="text-gray-900 font-semibold">{challenge.title}</h4>
                             <p className="text-xs text-gray-600 mt-0.5">{challenge.description}</p>
                           </div>
                           <Badge className={`flex-shrink-0 ml-2 ${
@@ -374,7 +364,7 @@ export function TeamsScreen() {
                       </div>
                     )}
                     {isComplete && (
-                      <div className="mt-2 flex items-center gap-2 text-sm text-green-600">
+                      <div className="mt-2 flex items-center gap-2 text-sm text-green-600 font-semibold">
                         <CheckCircle2 className="size-4" />
                         <span>Challenge Complete!</span>
                       </div>
@@ -431,7 +421,7 @@ export function TeamsScreen() {
                 {/* Community Feed */}
                 <div className="bg-white rounded-2xl shadow-lg p-4">
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-gray-900">Community Feed</h3>
+                    <h3 className="text-gray-900 font-semibold">Community Feed</h3>
                     <button className="text-sm text-blue-600 hover:underline">View All</button>
                   </div>
                   <div className="space-y-3">
@@ -448,7 +438,7 @@ export function TeamsScreen() {
                           <div className="flex-1 min-w-0">
                             <p className="text-xs text-gray-600">
                               <button 
-                                className="hover:underline text-blue-600"
+                                className="hover:underline text-blue-600 font-semibold"
                                 onClick={() => setSelectedMember({ 
                                   name: post.author, 
                                   username: post.author.toLowerCase().replace(' ', '_'),
@@ -509,10 +499,7 @@ export function TeamsScreen() {
               <TabsContent value="members" className="mt-4 space-y-3 pb-24">
                 <div className="bg-white rounded-2xl shadow-lg p-4">
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-gray-900">Team Members ({mockTeamMembers.length})</h3>
-                    <Badge variant="outline" className="text-xs">
-                      {mockTeamMembers.filter(m => m.verified).length} Verified
-                    </Badge>
+                    <h3 className="text-gray-900 font-semibold">Team Members ({mockTeamMembers.length})</h3>
                   </div>
                   <div className="space-y-2">
                     {mockTeamMembers.map((member) => (
@@ -528,10 +515,8 @@ export function TeamsScreen() {
                         </Avatar>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <p className="text-gray-900 truncate">{member.name}</p>
-                            {member.verified && (
-                              <CheckCircle2 className="size-4 text-blue-600 flex-shrink-0" />
-                            )}
+                            <p className="text-gray-900 font-semibold truncate">{member.name}</p>
+                            <CheckCircle2 className="size-4 text-blue-600 flex-shrink-0" />
                             {member.role === 'Admin' && (
                               <Crown className="size-4 text-yellow-600 flex-shrink-0" />
                             )}
@@ -556,7 +541,7 @@ export function TeamsScreen() {
               <TabsContent value="chat" className="mt-4 pb-24">
                 <div className="bg-white rounded-2xl shadow-lg p-6 text-center">
                   <MessageCircle className="size-12 text-gray-400 mx-auto mb-3" />
-                  <h3 className="text-gray-900 mb-2">Team Chat</h3>
+                  <h3 className="text-gray-900 font-semibold mb-2">Team Chat</h3>
                   <p className="text-sm text-gray-600 mb-4">
                     Connect with your teammates, plan matches, and share updates.
                   </p>
@@ -584,7 +569,7 @@ export function TeamsScreen() {
                       <div className="flex-1">
                         <div className="flex items-start justify-between mb-1">
                           <div>
-                            <h4 className="text-gray-900">{achievement.name}</h4>
+                            <h4 className="text-gray-900 font-semibold">{achievement.name}</h4>
                             <p className="text-sm text-gray-600 mt-0.5">{achievement.description}</p>
                           </div>
                           <Badge className={`flex-shrink-0 ml-2 ${
@@ -607,7 +592,7 @@ export function TeamsScreen() {
                       </div>
                     )}
                     {achievement.earned && (
-                      <div className="flex items-center gap-2 text-sm text-blue-600">
+                      <div className="flex items-center gap-2 text-sm text-blue-600 font-semibold">
                         <Star className="size-4 fill-blue-600" />
                         <span>Earned!</span>
                       </div>
@@ -646,11 +631,11 @@ export function TeamsScreen() {
                   >
                     <div className="flex items-start gap-3">
                       <div className={`px-3 py-1.5 rounded-full bg-gradient-to-r ${perk.color} shadow`}>
-                        <span className="text-white">Lv {perk.level}</span>
+                        <span className="text-white font-semibold">Lv {perk.level}</span>
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-2">
-                          <h4 className="text-gray-900">{perk.name}</h4>
+                          <h4 className="text-gray-900 font-semibold">{perk.name}</h4>
                           {isUnlocked && (
                             <CheckCircle2 className="size-4 text-green-600" />
                           )}
@@ -732,10 +717,8 @@ export function TeamsScreen() {
                       </Avatar>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <p className="text-sm text-gray-900 truncate">{member.name}</p>
-                          {member.verified && (
-                            <CheckCircle2 className="size-3 text-blue-600 flex-shrink-0" />
-                          )}
+                          <p className="text-sm text-gray-900 font-semibold truncate">{member.name}</p>
+                          <CheckCircle2 className="size-3 text-blue-600 flex-shrink-0" />
                           {member.role === 'Admin' && (
                             <Crown className="size-3 text-yellow-600 flex-shrink-0" />
                           )}
@@ -825,27 +808,27 @@ export function TeamsScreen() {
       <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-green-600 pt-8 pb-12 px-6">
         <div className="flex items-center justify-between mb-3">
           <div>
-            <h1 className="text-white text-2xl">Teams</h1>
+            <h1 className="text-white text-2xl font-bold">Teams</h1>
             <p className="text-white/80 text-sm mt-1">Build your community</p>
           </div>
           <NotificationSystem unreadCount={3} />
         </div>
         <div className="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-2xl inline-block">
           <p className="text-xs text-white/80">Your Points</p>
-          <p className="text-white">🏆 {userPoints}</p>
+          <p className="text-white font-semibold">🏆 {userPoints}</p>
         </div>
       </div>
 
       <div className="px-6 -mt-6 space-y-4 pb-24">
         <div className="bg-gradient-to-br from-blue-600 to-green-600 rounded-2xl shadow-xl shadow-blue-500/30 p-5 text-white">
-          <h3 className="mb-2">Create Your Own Team</h3>
+          <h3 className="font-semibold mb-2">Create Your Own Team</h3>
           <p className="text-sm text-white/90 mb-4">
             Start your own team for {createTeamCost} points
           </p>
           <Button 
             onClick={handleCreateTeam}
             disabled={userPoints < createTeamCost}
-            className="w-full bg-white text-blue-600 hover:bg-white/90 rounded-xl disabled:opacity-50"
+            className="w-full bg-white text-blue-600 hover:bg-white/90 rounded-xl disabled:opacity-50 font-semibold"
           >
             <Plus className="size-5 mr-2" />
             Create Team ({createTeamCost} pts)
@@ -853,7 +836,7 @@ export function TeamsScreen() {
         </div>
 
         <div className="space-y-3">
-          <h3 className="text-gray-900 px-1">Suggested Teams</h3>
+          <h3 className="text-gray-900 font-semibold px-1">Suggested Teams</h3>
           {suggestedTeams.map((team) => (
             <div key={team.id} className="bg-white rounded-2xl shadow-lg p-4">
               <div className="flex items-center gap-3 mb-3">
@@ -861,7 +844,7 @@ export function TeamsScreen() {
                   {team.logo}
                 </div>
                 <div className="flex-1">
-                  <h4 className="text-gray-900">{team.name}</h4>
+                  <h4 className="text-gray-900 font-semibold">{team.name}</h4>
                   <div className="flex items-center gap-2 mt-0.5">
                     <Badge className="bg-blue-100 text-blue-700 text-xs">{team.sport}</Badge>
                     <Badge className={`bg-gradient-to-r ${teamPerks[team.level - 1].color} text-white text-xs`}>
@@ -870,11 +853,10 @@ export function TeamsScreen() {
                   </div>
                   <p className="text-xs text-gray-500 mt-1">{team.barangay} • {team.members} members</p>
                 </div>
-                <Badge variant="outline" className="text-xs">#{team.rank}</Badge>
               </div>
               <Button 
                 onClick={() => handleJoinTeam(team)}
-                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-xl"
+                className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-xl font-semibold"
               >
                 Join Team
               </Button>
