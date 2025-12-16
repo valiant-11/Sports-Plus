@@ -636,10 +636,23 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
                 </div>
               )}
 
+              {votesDisapproved > 0 && (
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
+                  <p className="text-sm text-red-700 font-semibold mb-3">Votes Against:</p>
+                  <p className="text-lg font-bold text-red-600">{votesDisapproved}/{players.length}</p>
+                </div>
+              )}
+
               {votesApproved > 0 && (
                 <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl">
                   <p className="text-sm text-green-700 font-semibold mb-3">Votes For:</p>
                   <p className="text-lg font-bold text-green-600">{votesApproved}/{players.length}</p>
+                </div>
+              )}
+
+              {userVote === 'disagree' && votesDisapproved >= Math.ceil(players.length * 0.6) && (
+                <div className="p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                  <p className="text-sm text-blue-700 font-semibold">✓ Majority disagrees. You will enter the correct score next.</p>
                 </div>
               )}
 
@@ -651,6 +664,113 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
             </div>
           </div>
         </ScrollArea>
+      </div>
+    );
+  }
+
+  if (gameState === 'rescore') {
+    return (
+      <div className="h-screen w-full max-w-md mx-auto bg-gray-50 flex flex-col">
+        <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-green-600 pt-8 pb-8 px-6 rounded-b-3xl">
+          <h1 className="text-white text-2xl font-bold">Re-enter Score</h1>
+          <p className="text-white/80 text-sm">What was the correct final score?</p>
+        </div>
+
+        <ScrollArea className="flex-1 px-6 py-6">
+          <div className="space-y-6 pb-32">
+            <div className="bg-white rounded-2xl shadow-lg p-6">
+              <h2 className="text-gray-900 font-bold text-xl mb-2 text-center">Correct Final Score</h2>
+              <p className="text-gray-600 text-sm text-center mb-6">Majority disagreed with the score. Please enter the correct score:</p>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm text-gray-600 font-semibold mb-2 block">Team 1 Score</label>
+                  <Input
+                    type="number"
+                    value={team1Score}
+                    onChange={(e) => setTeam1Score(e.target.value)}
+                    placeholder="Enter score"
+                    className="rounded-xl h-12 text-lg text-center"
+                  />
+                </div>
+
+                <div className="flex items-center justify-center py-4">
+                  <div className="text-4xl font-bold text-gray-400">vs</div>
+                </div>
+
+                <div>
+                  <label className="text-sm text-gray-600 font-semibold mb-2 block">Team 2 Score</label>
+                  <Input
+                    type="number"
+                    value={team2Score}
+                    onChange={(e) => setTeam2Score(e.target.value)}
+                    placeholder="Enter score"
+                    className="rounded-xl h-12 text-lg text-center"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 mt-8">
+                <Button
+                  onClick={() => setGameState('vote-score')}
+                  variant="outline"
+                  className="rounded-2xl py-3 font-semibold border-gray-300"
+                >
+                  Back
+                </Button>
+                <Button
+                  onClick={handleRescore}
+                  className="rounded-2xl py-3 font-semibold text-white bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                >
+                  Submit Score
+                </Button>
+              </div>
+            </div>
+          </div>
+        </ScrollArea>
+      </div>
+    );
+  }
+
+  if (gameState === 'revote-score') {
+    return (
+      <div className="h-screen w-full max-w-md mx-auto bg-gray-50 flex flex-col">
+        <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-green-600 pt-8 pb-8 px-6 rounded-b-3xl">
+          <h1 className="text-white text-2xl font-bold">Final Score Vote</h1>
+          <p className="text-white/80 text-sm">New score submitted - voting again...</p>
+        </div>
+
+        <div className="flex-1 flex items-center justify-center px-6">
+          <div className="bg-white rounded-2xl shadow-lg p-8 text-center w-full">
+            <Trophy className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
+            <h2 className="text-gray-900 font-bold text-xl mb-2">Final Score Confirmation</h2>
+            <p className="text-gray-600 mb-6 text-2xl font-bold">Team 1: {team1Score} vs Team 2: {team2Score}</p>
+            
+            <div className="mb-6">
+              <p className="text-sm text-gray-600 font-semibold mb-3">Players Approving:</p>
+              <div className="flex flex-wrap gap-2 justify-center">
+                {players.map((player, index) => (
+                  <div key={player.id} className="flex flex-col items-center gap-1">
+                    <Badge
+                      className={`px-3 py-1.5 text-xs font-semibold ${index < votesApproved ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}
+                    >
+                      {player.name}
+                    </Badge>
+                    <Badge className={`${getSkillBadgeColor(player.skillLevel)} text-xs font-semibold px-2 py-0.5`}>
+                      {player.skillLevel}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <p className="text-lg font-bold text-green-600">{votesApproved}/{players.length} Approved</p>
+            
+            {votesApproved >= Math.ceil(players.length * 0.7) && (
+              <p className="text-sm text-green-600 font-semibold mt-4">✓ Score confirmed! Moving to rating...</p>
+            )}
+          </div>
+        </div>
       </div>
     );
   }
