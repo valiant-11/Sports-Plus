@@ -8,7 +8,6 @@ import { ForgotPasswordScreen } from './components/ForgotPasswordScreen';
 import { HomeScreen } from './components/HomeScreen';
 import { CreateGameScreen } from './components/CreateGameScreen';
 import { GameHistoryScreen } from './components/GameHistoryScreen';
-import { TeamsScreen } from './components/TeamsScreen';
 import { ProfileScreen } from './components/ProfileScreen';
 import { PointsBadgesScreen } from './components/PointsBadgesScreen';
 import { ReportScreen } from './components/ReportScreen';
@@ -25,6 +24,11 @@ import { QueueScreen } from './components/QueueScreen';
 import { CreatorGameViewScreen } from './components/CreatorGameViewScreen';
 import { PostGameSummaryScreen } from './components/PostGameSummaryScreen';
 import { ParticipantFeedbackScreen } from './components/ParticipantFeedbackScreen';
+import { SchedulesScreen } from './components/SchedulesScreen';
+import { TeamsScreen } from './screens/TeamsScreen';
+import { TeamDetailScreen } from './screens/TeamDetailScreen';
+import { TournamentScreen } from './screens/TournamentScreen';
+import { TournamentDetailScreen } from './screens/TournamentDetailScreen';
 import { EventsScreen } from './screens/EventsScreen';
 import { BottomNavigation } from './components/BottomNavigation';
 import { NotificationPanel } from './components/NotificationPanel';
@@ -43,7 +47,11 @@ type AppScreen =
   | 'create'
   | 'queue'
   | 'teams'
+  | 'team-detail'
   | 'events'
+  | 'tournaments'
+  | 'tournament-detail'
+  | 'schedules'
   | 'profile'
   | 'history'
   | 'points-badges'
@@ -91,6 +99,8 @@ export function AppContent() {
   const [joinedGames, setJoinedGames] = useState<string[]>([]);
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [selectedGameId, setSelectedGameId] = useState<string | null>(null);
+  const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
+  const [selectedTournamentId, setSelectedTournamentId] = useState<string | null>(null);
   const [createdGameData, setCreatedGameData] = useState<any>(null);
   const [joinedGameData, setJoinedGameData] = useState<any>(null);
   const [postGameParticipants, setPostGameParticipants] = useState<any[]>([]);
@@ -454,6 +464,10 @@ export function AppContent() {
           }}
           onRequestLocation={handleRequestLocation}
           onRemoveJoinedGame={handleRemoveJoinedGame}
+          onOpenSchedules={() => {
+            setCurrentScreen('schedules');
+            setActiveTab('home');
+          }}
         />
       )}
 
@@ -510,13 +524,62 @@ export function AppContent() {
           }}
           onJoinGame={handleJoinGame}
           onJoinTournament={(tournamentId) => {
-            // TODO: Implement tournament join flow
-            toast.info(`Tournament ${tournamentId} - registration coming soon`);
+            setSelectedTournamentId(tournamentId);
+            setCurrentScreen('tournament-detail');
           }}
         />
       )}
 
-      {currentScreen === 'teams' && <TeamsScreen />}
+      {currentScreen === 'schedules' && (
+        <SchedulesScreen 
+          onBack={() => {
+            setCurrentScreen('home');
+            setActiveTab('home');
+          }}
+        />
+      )}
+
+      {currentScreen === 'teams' && (
+        <TeamsScreen 
+          onBack={() => {
+            setCurrentScreen('home');
+            setActiveTab('home');
+          }}
+          onViewTeam={(teamId) => {
+            setSelectedTeamId(teamId);
+            setCurrentScreen('team-detail');
+          }}
+        />
+      )}
+
+      {currentScreen === 'team-detail' && selectedTeamId && (
+        <TeamDetailScreen 
+          teamId={selectedTeamId}
+          onBack={() => setCurrentScreen('teams')}
+          currentUserId={currentUser?.id}
+        />
+      )}
+
+      {currentScreen === 'tournaments' && (
+        <TournamentScreen 
+          onBack={() => {
+            setCurrentScreen('home');
+            setActiveTab('home');
+          }}
+          onViewTournament={(tournamentId) => {
+            setSelectedTournamentId(tournamentId);
+            setCurrentScreen('tournament-detail');
+          }}
+        />
+      )}
+
+      {currentScreen === 'tournament-detail' && selectedTournamentId && (
+        <TournamentDetailScreen 
+          tournamentId={selectedTournamentId}
+          onBack={() => setCurrentScreen('tournaments')}
+          currentUserId={currentUser?.id}
+        />
+      )}
 
       {currentScreen === 'profile' && (
         <ProfileScreen 

@@ -1,4 +1,4 @@
-import { Settings, CheckCircle2, Trophy, Award, Upload, Star, Camera, History, Edit2, X, Info, AlertCircle, HeartPulse, FileText } from 'lucide-react';
+import { Settings, CheckCircle2, Trophy, Award, Upload, Star, Camera, History, Edit2, X, Info, AlertCircle, HeartPulse, FileText, Calendar, MapPin, Clock } from 'lucide-react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { NotificationSystem } from './NotificationSystem';
 import { CertificateView } from './CertificateView';
 import { useAuth } from '../context/AuthContext';
+import { mockGames, mockSchedules, mockTournaments, mockTeams, mockUsers } from '../data/mockData';
 
 interface ProfileScreenProps {
   onSettings: () => void;
@@ -215,6 +216,131 @@ export function ProfileScreen({ onSettings, onViewAchievements, onViewHistory, o
     }
   };
 
+  // Helper function to get upcoming activities
+  const getUpcomingActivities = () => {
+    if (!currentUser) return { games: [], slots: [], tournaments: [], allItems: [] };
+
+    // Get games
+    const userGames = mockGames.filter(game => game.players.includes(currentUser.id));
+
+    // Get scheduled slots
+    const userSchedules = (currentUser.mySchedules || [])
+      .map(scheduleId => mockSchedules.find(s => s.id === scheduleId))
+      .filter(Boolean) as any[];
+
+    // Get tournaments where user's team is a participant
+    const userTeams = mockTeams.filter(team => 
+      team.members.some(m => m.userId === currentUser.id)
+    );
+    const userTournaments = mockTournaments.filter(t =>
+      userTeams.some(team => t.participants.some(p => p.type === 'team' && p.id === team.id))
+    );
+
+    // Transform and combine all items
+    const allItems = [
+      ...userGames.map(game => ({
+        id: game.id,
+        type: 'game',
+        title: game.title,
+        sport: game.sport,
+        date: game.date,
+        time: game.time,
+        venue: game.venue.name,
+        data: game,
+      })),
+      ...userSchedules.map(schedule => ({
+        id: schedule.id,
+        type: 'slot',
+        title: `${schedule.sport} - Every ${schedule.dayOfWeek}`,
+        sport: schedule.sport,
+        date: null, // Recurring, no specific date
+        time: schedule.time,
+        venue: schedule.venue,
+        data: schedule,
+      })),
+      ...userTournaments.map(tournament => ({
+        id: tournament.id,
+        type: 'tournament',
+        title: tournament.name,
+        sport: tournament.sport,
+        date: tournament.date,
+        time: '',
+        venue: tournament.venue,
+        data: tournament,
+      })),
+    ].sort((a, b) => {
+      if (!a.date && !b.date) return 0;
+      if (!a.date) return 1;
+      if (!b.date) return -1;
+      return new Date(a.date).getTime() - new Date(b.date).getTime();
+    });
+
+    return { games: userGames, slots: userSchedules, tournaments: userTournaments, allItems };
+  };
+
+  const getDateGroup = (date: string | null) => {
+    if (!date) return 'Recurring';
+    const itemDate = new Date(date);
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const weekEnd = new Date(today);
+    weekEnd.setDate(weekEnd.getDate() + 7);
+
+    const itemDateStr = itemDate.toDateString();
+    const todayStr = today.toDateString();
+    const tomorrowStr = tomorrow.toDateString();
+
+    if (itemDateStr === todayStr) return 'Today';
+    if (itemDateStr === tomorrowStr) return 'Tomorrow';
+    if (itemDate <= weekEnd) return 'This week';
+    return 'Coming up';
+  };
+
+  const formatDate = (date: string | null) => {
+    if (!date) return 'Recurring';
+    return new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
+  const getSportColor = (sport: string) => {
+    switch (sport) {
+      case 'Basketball':
+        return 'bg-blue-100 text-blue-600';
+      case 'Badminton':
+        return 'bg-teal-100 text-teal-600';
+      case 'Football':
+        return 'bg-green-100 text-green-600';
+      case 'Volleyball':
+        return 'bg-pink-100 text-pink-600';
+      case 'Tennis':
+        return 'bg-yellow-100 text-yellow-600';
+      case 'Swimming':
+        return 'bg-cyan-100 text-cyan-600';
+      default:
+        return 'bg-gray-100 text-gray-600';
+    }
+  };
+
+  const handleCancelActivity = (item: any) => {
+    if (!currentUser) return;
+
+    if (item.type === 'game') {
+      // Remove from game players
+      const updatedGames = mockGames.map(g =>
+        g.id === item.data.id ? { ...g, players: g.players.filter(p => p !== currentUser.id) } : g
+      );
+      toast.success(`Left ${item.title}`);
+    } else if (item.type === 'slot') {
+      // Remove from booked slots
+      const updatedSchedules = mockSchedules.map(s =>
+        s.id === item.data.id
+          ? { ...s, bookedBy: s.bookedBy.filter(b => b !== currentUser.id), spotsLeft: s.spotsLeft + 1 }
+          : s
+      );
+      toast.success(`Cancelled ${item.title}`);
+    }
+  };
+
   return (
     <div className="h-screen w-full max-w-md mx-auto bg-gray-50 flex flex-col pb-20 overflow-y-auto">
       <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-green-600 pt-8 pb-8 px-6 rounded-b-[2rem] relative">
@@ -254,6 +380,14 @@ export function ProfileScreen({ onSettings, onViewAchievements, onViewHistory, o
               <span className="text-green-100 text-xs font-semibold">Minor Account — Parental Consent Verified</span>
             </div>
           )}
+          {currentUser?.accountType === 'coach' && (
+            <div className="mt-2 px-2.5 py-1 bg-teal-500/20 border border-teal-400/50 rounded-lg inline-flex items-center gap-1">
+              <span className="text-teal-100 text-xs font-semibold">Coach</span>
+            </div>
+          )}
+          {currentUser?.accountType === 'coach' && currentUser?.specialization && (
+            <p className="text-white/80 text-sm mt-1">Specialization: {currentUser.specialization}</p>
+          )}
           {!user.isVerified && (
             <p className="text-white/60 text-sm mt-0.5">Unverified Player</p>
           )}
@@ -267,6 +401,99 @@ export function ProfileScreen({ onSettings, onViewAchievements, onViewHistory, o
       </div>
 
       <div className="px-6 mt-6 space-y-4">
+        {/* Assigned Teams Section (Coach Only) */}
+        {currentUser?.accountType === 'coach' && (
+          <div className="bg-white rounded-2xl shadow-lg shadow-gray-200/50 p-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-gray-900 font-bold flex items-center gap-2">
+                <Trophy className="w-5 h-5 text-amber-600" />
+                Assigned Teams
+              </h3>
+              <Badge variant="secondary">{currentUser.assignedTeams?.length || 0}</Badge>
+            </div>
+
+            {(!currentUser.assignedTeams || currentUser.assignedTeams.length === 0) ? (
+              <p className="text-gray-600 text-sm text-center py-4">No assigned teams yet</p>
+            ) : (
+              <div className="space-y-3">
+                {currentUser.assignedTeams.map(teamId => {
+                  const team = mockTeams.find(t => t.id === teamId);
+                  if (!team) return null;
+
+                  return (
+                    <div key={team.id} className="bg-gray-50 rounded-lg p-3 hover:bg-gray-100 transition-colors cursor-pointer">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1">
+                          <p className="text-gray-900 font-semibold">{team.name}</p>
+                          <p className="text-xs text-gray-600 mt-1">{team.sport} • {team.record.wins}W-{team.record.losses}L-{team.record.draws}D</p>
+                        </div>
+                        <Badge className="bg-amber-100 text-amber-700 text-xs">{team.sport}</Badge>
+                      </div>
+                      <button className="text-blue-600 text-xs font-semibold hover:underline mt-2">
+                        View Stats →
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* My Tournaments Section (Organization Only) */}
+        {currentUser?.accountType === 'organization' && (
+          <div className="bg-white rounded-2xl shadow-lg shadow-gray-200/50 p-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-gray-900 font-bold flex items-center gap-2">
+                <Trophy className="w-5 h-5 text-purple-600" />
+                My Tournaments
+              </h3>
+              <button className="p-1.5 hover:bg-purple-50 rounded text-purple-600 hover:text-purple-700 transition-colors">
+                <Edit2 className="w-4 h-4" />
+              </button>
+            </div>
+
+            {(() => {
+              const orgTournaments = mockTournaments.filter(t => t.orgId === currentUser.id);
+              
+              if (orgTournaments.length === 0) {
+                return (
+                  <div className="text-center py-6">
+                    <p className="text-gray-600 text-sm mb-3">No tournaments created yet</p>
+                    <button className="text-purple-600 text-sm font-semibold hover:underline">
+                      Create Tournament
+                    </button>
+                  </div>
+                );
+              }
+
+              return (
+                <div className="space-y-3">
+                  {orgTournaments.map(tournament => (
+                    <div key={tournament.id} className="bg-gray-50 rounded-lg p-3 hover:bg-gray-100 transition-colors">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex-1">
+                          <p className="text-gray-900 font-semibold">{tournament.name}</p>
+                          <p className="text-xs text-gray-600 mt-1">
+                            {tournament.sport} • {tournament.participants.length}/{tournament.maxParticipants} registered
+                          </p>
+                        </div>
+                        <Badge className="bg-purple-100 text-purple-700 text-xs">{tournament.sport}</Badge>
+                      </div>
+                      <p className="text-xs text-gray-600 mb-2">
+                        📅 {new Date(tournament.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} • {tournament.status}
+                      </p>
+                      <button className="text-blue-600 text-xs font-semibold hover:underline">
+                        Manage →
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              );
+            })()}
+          </div>
+        )}
+
         {/* PWD Badge Indicator - moved to header */}
         {healthInfo.pwdStatus && healthInfo.pwdStatus !== 'None' && (
           <div className="flex items-center gap-2 justify-center mt-2 mb-2">
@@ -274,6 +501,106 @@ export function ProfileScreen({ onSettings, onViewAchievements, onViewHistory, o
             <span className="text-xs text-gray-700">{healthInfo.pwdStatus === 'Other' ? healthInfo.pwdOther : healthInfo.pwdStatus}</span>
           </div>
         )}
+
+        {/* My Schedule Section */}
+        <div className="bg-white rounded-2xl shadow-lg shadow-gray-200/50 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-gray-900 flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-blue-600" />
+              My Schedule
+            </h3>
+          </div>
+
+          {(() => {
+            const { allItems } = getUpcomingActivities();
+            
+            if (allItems.length === 0) {
+              return (
+                <div className="text-center py-6">
+                  <p className="text-gray-600 text-sm mb-3">No upcoming games.</p>
+                  <button className="text-blue-600 text-sm font-medium hover:underline">
+                    Find one in the Events tab!
+                  </button>
+                </div>
+              );
+            }
+
+            // Group items by date
+            const grouped: { [key: string]: any[] } = {};
+            allItems.forEach(item => {
+              const group = getDateGroup(item.date);
+              if (!grouped[group]) grouped[group] = [];
+              grouped[group].push(item);
+            });
+
+            const groups = ['Today', 'Tomorrow', 'This week', 'Recurring', 'Coming up'];
+            
+            return (
+              <div className="space-y-3">
+                {groups.map(group => (
+                  grouped[group] && grouped[group].length > 0 && (
+                    <div key={group}>
+                      <p className="text-xs font-semibold text-gray-500 uppercase mb-2">{group}</p>
+                      <div className="space-y-2">
+                        {grouped[group].map(item => (
+                          <div key={item.id} className="flex items-start gap-3 bg-gray-50 p-3 rounded-lg hover:bg-gray-100 transition-colors">
+                            {/* Sport Icon */}
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${getSportColor(item.sport)}`}>
+                              <span className="text-sm font-bold">{item.sport.charAt(0)}</span>
+                            </div>
+
+                            {/* Content */}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-gray-900 text-sm font-medium">{item.title}</p>
+                              <div className="flex items-center gap-1 text-xs text-gray-600 mt-0.5">
+                                <Clock className="w-3 h-3" />
+                                <span>{item.time || '—'}</span>
+                                {item.venue && (
+                                  <>
+                                    <span>•</span>
+                                    <MapPin className="w-3 h-3" />
+                                    <span className="truncate">{item.venue}</span>
+                                  </>
+                                )}
+                                {item.date && (
+                                  <>
+                                    <span>•</span>
+                                    <span>{formatDate(item.date)}</span>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Type Badge & Action */}
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              <Badge 
+                                className={`text-xs ${
+                                  item.type === 'game' ? 'bg-blue-100 text-blue-700' :
+                                  item.type === 'slot' ? 'bg-teal-100 text-teal-700' :
+                                  'bg-purple-100 text-purple-700'
+                                }`}
+                              >
+                                {item.type === 'game' ? 'Game' : item.type === 'slot' ? 'Slot' : 'Tournament'}
+                              </Badge>
+                              <button
+                                onClick={() => handleCancelActivity(item)}
+                                className="p-1 hover:bg-red-50 rounded text-red-600 hover:text-red-700 transition-colors"
+                                title={item.type === 'tournament' ? 'View' : 'Cancel'}
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                ))}
+              </div>
+            );
+          })()}
+        </div>
+
                 <div className="bg-white rounded-2xl shadow-lg shadow-gray-200/50 p-4 mb-2">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-gray-900 flex items-center gap-2">

@@ -144,9 +144,10 @@ interface HomeScreenProps {
   onOpenMessages?: () => void;
   onRequestLocation?: () => void;
   onRemoveJoinedGame?: (gameId: string) => void;
+  onOpenSchedules?: () => void;
 }
 
-export function HomeScreen({ onOpenChat, myGames = [], onManageGame, onJoinGame, joinedGames = [], onOpenQueue, onOpenMessages, onRequestLocation, onRemoveJoinedGame }: HomeScreenProps) {
+export function HomeScreen({ onOpenChat, myGames = [], onManageGame, onJoinGame, joinedGames = [], onOpenQueue, onOpenMessages, onRequestLocation, onRemoveJoinedGame, onOpenSchedules }: HomeScreenProps) {
   const { currentUser, updateUser } = useAuth();
   const [view, setView] = useState<'map' | 'list'>('list');
   const [selectedSport, setSelectedSport] = useState('all');
@@ -287,6 +288,22 @@ export function HomeScreen({ onOpenChat, myGames = [], onManageGame, onJoinGame,
             Map View
           </button>
         </div>
+      </div>
+
+      {/* Weekly Schedules Section */}
+      <div className="px-6 mt-4">
+        <button
+          onClick={onOpenSchedules}
+          className="w-full bg-gradient-to-r from-purple-100 to-pink-100 rounded-2xl shadow-lg shadow-purple-200/50 p-4 hover:shadow-xl transition-all border border-purple-200 text-left"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-gray-900 font-bold">Weekly Schedules</h3>
+              <p className="text-xs text-gray-600 mt-1">Book recurring game slots</p>
+            </div>
+            <span className="text-2xl">📅</span>
+          </div>
+        </button>
       </div>
 
       <div className="flex-1 overflow-y-auto px-6 mt-4 space-y-3 pb-24">

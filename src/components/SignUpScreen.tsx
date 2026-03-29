@@ -16,6 +16,8 @@ interface SignUpScreenProps {
 
 const sports = ['Basketball', 'Volleyball', 'Football', 'Badminton', 'Tennis', 'Swimming'];
 const skillLevels = ['Casual', 'Novice', 'Elite'];
+const accountTypes = ['Player', 'Coach', 'Organization'];
+const coachSpecializations = ['Basketball', 'Football', 'Badminton', 'Volleyball', 'Tennis', 'Multiple'];
 
 export function SignUpScreen({ onSignUp, onBack }: SignUpScreenProps) {
   const [formData, setFormData] = useState({
@@ -27,6 +29,9 @@ export function SignUpScreen({ onSignUp, onBack }: SignUpScreenProps) {
     dateOfBirth: '',
     age: 0,
     isMinor: false,
+    accountType: 'Player',
+    isPWD: false,
+    specialization: '',
     selectedSports: [] as string[],
     skillLevel: '',
     location: '',
@@ -257,6 +262,62 @@ export function SignUpScreen({ onSignUp, onBack }: SignUpScreenProps) {
             </div>
 
             <div className="space-y-2">
+              <Label className="text-gray-700">Account Type</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {accountTypes.map((type) => (
+                  <button
+                    key={type}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, accountType: type, specialization: type === 'Coach' ? formData.specialization : '' })}
+                    className={`py-3 rounded-xl border-2 transition-all text-center text-sm ${
+                      formData.accountType === type
+                        ? 'border-blue-600 bg-blue-50 text-blue-700 font-semibold'
+                        : 'border-gray-200 text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    {type}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {formData.accountType === 'Coach' && (
+              <div className="space-y-2">
+                <Label className="text-gray-700">Primary Sport Specialization</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {coachSpecializations.map((spec) => (
+                    <button
+                      key={spec}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, specialization: spec })}
+                      className={`py-3 px-4 rounded-xl border-2 transition-all text-sm ${
+                        formData.specialization === spec
+                          ? 'border-teal-600 bg-teal-50 text-teal-700 font-semibold'
+                          : 'border-gray-200 text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      {spec}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {formData.accountType === 'Player' && (
+              <>
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2">
+                    <Checkbox
+                      checked={formData.isPWD}
+                      onCheckedChange={(checked) => setFormData({ ...formData, isPWD: checked as boolean })}
+                    />
+                    <span className="text-gray-700">I am a PWD (Person with Disability)</span>
+                  </Label>
+                </div>
+              </>
+            )}
+
+            <div className="space-y-2">
               <Label className="text-gray-700">Favorite Sports (Select multiple)</Label>
               <div className="grid grid-cols-2 gap-2">
                 {sports.map((sport) => (
@@ -276,8 +337,9 @@ export function SignUpScreen({ onSignUp, onBack }: SignUpScreenProps) {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-gray-700">Skill Level</Label>
+            {formData.accountType !== 'Organization' && (
+              <div className="space-y-2">
+                <Label className="text-gray-700">Skill Level</Label>
               <div className="grid grid-cols-3 gap-2">
                 {skillLevels.map((level) => (
                   <button
@@ -294,7 +356,8 @@ export function SignUpScreen({ onSignUp, onBack }: SignUpScreenProps) {
                   </button>
                 ))}
               </div>
-            </div>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="location" className="text-gray-700">Location</Label>

@@ -26,6 +26,9 @@ export interface User {
   waiverAccepted: boolean;
   waiverTimestamp?: string;
   certificates: Certificate[];
+  mySchedules?: string[];
+  specialization?: string;
+  assignedTeams?: string[];
 }
 
 export interface Venue {
@@ -129,6 +132,7 @@ export const mockUsers: User[] = [
     waiverAccepted: true,
     waiverTimestamp: '2026-03-15T08:30:00.000Z',
     certificates: [],
+    mySchedules: ['s1', 's3', 's5'],
   },
   {
     id: 'u2',
@@ -142,6 +146,7 @@ export const mockUsers: User[] = [
     skillLevel: 'Intermediate',
     waiverAccepted: true,
     certificates: [],
+    mySchedules: ['s1', 's2', 's5'],
   },
   {
     id: 'u3',
@@ -155,6 +160,9 @@ export const mockUsers: User[] = [
     skillLevel: 'N/A',
     waiverAccepted: true,
     certificates: [],
+    mySchedules: ['s3'],
+    specialization: 'Basketball',
+    assignedTeams: ['t1'],
   },
   {
     id: 'u4',
@@ -179,6 +187,7 @@ export const mockUsers: User[] = [
         playerName: 'Carla Dizon',
       },
     ],
+    mySchedules: ['s1', 's4'],
   },
   {
     id: 'u5',
@@ -192,6 +201,7 @@ export const mockUsers: User[] = [
     skillLevel: 'N/A',
     waiverAccepted: true,
     certificates: [],
+    mySchedules: [],
   },
   {
     id: 'u6',
@@ -205,6 +215,7 @@ export const mockUsers: User[] = [
     skillLevel: 'Intermediate',
     waiverAccepted: true,
     certificates: [],
+    mySchedules: ['s1', 's3', 's5'],
   },
   {
     id: 'u7',
@@ -218,6 +229,7 @@ export const mockUsers: User[] = [
     skillLevel: 'Beginner',
     waiverAccepted: true,
     certificates: [],
+    mySchedules: ['s1', 's3'],
   },
   {
     id: 'u8',
@@ -230,8 +242,7 @@ export const mockUsers: User[] = [
     sport: 'Basketball',
     skillLevel: 'Intermediate',
     waiverAccepted: true,
-    certificates: [],
-  },
+    certificates: [],    mySchedules: ['s1', 's3'],  },
   {
     id: 'u9',
     name: 'Sofia Fernandez',
@@ -244,6 +255,7 @@ export const mockUsers: User[] = [
     skillLevel: 'Intermediate',
     waiverAccepted: true,
     certificates: [],
+    mySchedules: ['s1', 's2', 's3', 's5'],
   },
   {
     id: 'u10',
@@ -257,6 +269,7 @@ export const mockUsers: User[] = [
     skillLevel: 'Beginner',
     waiverAccepted: true,
     certificates: [],
+    mySchedules: ['s1', 's3', 's4'],
   },
 ];
 

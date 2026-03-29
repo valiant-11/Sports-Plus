@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Trophy, Star, Target, MapPin, Crown, Medal, TrendingUp, Award, ChevronDown } from 'lucide-react';
+import { Trophy, Star, Target, MapPin, Crown, Medal, TrendingUp, Award, ChevronDown, Users } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Avatar } from './ui/avatar';
 import { ScrollArea } from './ui/scroll-area';
 import { Button } from './ui/button';
+import { mockTeams, mockUsers } from '../data/mockData';
 
 interface LeaderboardScreenProps {
   onBack?: () => void;
@@ -313,6 +314,10 @@ export function LeaderboardScreen({ onBack }: LeaderboardScreenProps) {
             <MapPin className="size-4 mr-1.5" />
             Barangay
           </TabsTrigger>
+          <TabsTrigger value="teams" className="data-[state=active]:bg-white data-[state=active]:shadow whitespace-nowrap">
+            <Users className="size-4 mr-1.5" />
+            Teams
+          </TabsTrigger>
         </TabsList>
 
         <ScrollArea className="flex-1">
@@ -363,6 +368,50 @@ export function LeaderboardScreen({ onBack }: LeaderboardScreenProps) {
               {barangayRankings.map(barangay => (
                 <BarangayCard key={barangay.barangay} barangay={barangay} />
               ))}
+            </TabsContent>
+
+            <TabsContent value="teams" className="mt-0 space-y-3">
+              <div className="bg-cyan-50 border border-cyan-200 rounded-xl p-3 mb-4">
+                <p className="text-sm text-cyan-800">
+                  <Users className="size-4 inline mr-1" />
+                  Teams ranked by total points
+                </p>
+              </div>
+              {(() => {
+                const sortedTeams = [...mockTeams].sort((a, b) => b.totalPoints - a.totalPoints);
+                const getCaptainName = (captainId: string) => mockUsers.find(u => u.id === captainId)?.name || 'Unknown';
+                const getSportColor = (sport: string) => {
+                  switch (sport) {
+                    case 'Basketball': return 'bg-blue-100 text-blue-700';
+                    case 'Badminton': return 'bg-teal-100 text-teal-700';
+                    case 'Football': return 'bg-green-100 text-green-700';
+                    case 'Volleyball': return 'bg-pink-100 text-pink-700';
+                    default: return 'bg-gray-100 text-gray-700';
+                  }
+                };
+
+                return sortedTeams.map((team, index) => (
+                  <div key={team.id} className="bg-white rounded-xl p-4 border border-gray-100">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-bold text-lg text-gray-900">#{index + 1}</span>
+                          <h3 className="text-gray-900 font-bold">{team.name}</h3>
+                        </div>
+                        <p className="text-xs text-gray-600">Captain: {getCaptainName(team.captainId)}</p>
+                      </div>
+                      <Badge className={`${getSportColor(team.sport)} text-xs`}>{team.sport}</Badge>
+                    </div>
+                    <div className="flex justify-between items-center mt-3 pt-3 border-t border-gray-100">
+                      <span className="text-xs text-gray-600">{team.record.wins}W · {team.record.losses}L · {team.record.draws}D</span>
+                      <div className="flex items-center gap-1 text-blue-600">
+                        <Trophy className="size-4" />
+                        <span className="font-semibold">{team.totalPoints}</span>
+                      </div>
+                    </div>
+                  </div>
+                ));
+              })()}
             </TabsContent>
           </div>
         </ScrollArea>
