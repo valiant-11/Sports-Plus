@@ -965,7 +965,7 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
       </div>
     );
   }
-
+}
   if (gameState === 'rating') {
     const currentPlayer = players[currentRatingIndex];
     const ratedCount = Object.keys(playerRatings).length;
