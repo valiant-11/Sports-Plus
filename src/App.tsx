@@ -200,8 +200,8 @@ export function AppContent() {
       }
       
       // Check if game is full
-      const game = mockGames.find((g) => g.id === gameId);
-      if (game && game.players.length >= game.maxPlayers) {
+      const foundGame = mockGames.find((g) => g.id === gameId);
+      if (foundGame && currentUser.isPWD && foundGame.hostId !== currentUser.id) {
         toast.error('Sorry, this game is already full.');
         return;
       }
