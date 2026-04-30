@@ -28,29 +28,29 @@ export function RoleSelectionScreen({ onSelect, onBack }: RoleSelectionScreenPro
   ];
 
   return (
-    <MobileContainer className="bg-gray-50">
-      <div className="flex flex-col h-full overflow-hidden">
+    <div className="flex flex-col h-full bg-gray-50 overflow-hidden">
+      <div className="flex flex-col h-full">
         {/* Header - Dynamic Gradient */}
-        <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-green-600 pt-12 pb-16 px-10 rounded-b-[3rem] relative">
-          <div className="flex items-center gap-4 mb-4">
+        <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-green-600 pt-16 pb-20 px-8 rounded-b-[3rem] relative shadow-2xl shadow-blue-900/30 shrink-0">
+          <div className="flex items-center gap-4 mb-6">
             <button 
               onClick={onBack}
-              className="p-2.5 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 text-white hover:bg-white/30 transition-all"
+              className="p-3 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-white hover:bg-white/20 transition-all shadow-lg"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
-            <div className="bg-white rounded-2xl p-2.5 shadow-lg shadow-blue-900/20">
+            <div className="bg-white rounded-2xl p-3 shadow-xl shadow-blue-900/30">
               <ShieldCheck className="w-6 h-6 text-blue-600" />
             </div>
           </div>
-          <div>
-            <h1 className="text-3xl font-black text-white tracking-tight leading-tight">Choose Your Role</h1>
-            <p className="text-white/80 font-medium">Select how you'll use SportsPlus</p>
+          <div className="space-y-1">
+            <h1 className="text-4xl font-black text-white tracking-tighter leading-none">Choose Your Role</h1>
+            <p className="text-white font-semibold tracking-tight">Select how you'll use SportsPlus</p>
           </div>
         </div>
 
         {/* Roles Grid - Card Section */}
-        <div className="flex-1 px-6 -mt-8 flex flex-col justify-center gap-4">
+        <div className="flex-1 px-6 -mt-8 flex flex-col justify-center gap-4 overflow-y-auto min-h-0 h-0" style={{ minHeight: 0 }}>
           {roles.map((role) => (
             <button
               key={role.id}
@@ -58,7 +58,7 @@ export function RoleSelectionScreen({ onSelect, onBack }: RoleSelectionScreenPro
               className="w-full group text-left p-6 rounded-[2rem] bg-white border border-gray-100 shadow-xl shadow-gray-200/50 hover:shadow-2xl hover:border-blue-200 transition-all duration-300 relative overflow-hidden"
             >
               <div className="flex items-center gap-5 relative z-10">
-                <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${role.color} flex items-center justify-center text-white shadow-lg transform group-hover:scale-110 transition-transform duration-300`}>
+                <div className={`w-16 h-16 shrink-0 rounded-2xl bg-gradient-to-br ${role.color} flex items-center justify-center text-white shadow-lg transform group-hover:scale-110 transition-transform duration-300`}>
                   {role.icon}
                 </div>
                 <div className="flex-1">
@@ -82,6 +82,6 @@ export function RoleSelectionScreen({ onSelect, onBack }: RoleSelectionScreenPro
           </p>
         </div>
       </div>
-    </MobileContainer>
+    </div>
   );
 }

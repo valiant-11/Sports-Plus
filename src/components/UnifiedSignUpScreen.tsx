@@ -100,9 +100,9 @@ export function UnifiedSignUpScreen({ role, onSignUp, onBack }: UnifiedSignUpScr
   };
 
   return (
-    <MobileContainer className="bg-gray-50 dark:bg-slate-950 transition-colors">
+    <div className="flex flex-col h-full bg-gray-50 dark:bg-slate-950 transition-colors overflow-hidden">
       {/* Header - Dynamic Gradient matching Login */}
-      <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-green-600 pt-10 pb-16 px-10 relative rounded-b-[3rem] shadow-lg shadow-blue-900/20">
+      <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-green-600 pt-10 pb-16 px-8 relative rounded-b-[3rem] shadow-lg shadow-blue-900/20 shrink-0">
         <button 
           onClick={onBack} 
           className="mb-6 p-2.5 rounded-2xl bg-white/20 backdrop-blur-md text-white border border-white/30 shadow-sm hover:bg-white/30 transition-all flex items-center gap-2 text-sm font-bold"
@@ -123,7 +123,7 @@ export function UnifiedSignUpScreen({ role, onSignUp, onBack }: UnifiedSignUpScr
         </div>
       </div>
 
-      <ScrollArea className="flex-1 -mt-8">
+      <ScrollArea className="flex-1 -mt-8 min-h-0 h-0" style={{ minHeight: 0 }}>
         <div className="px-6 space-y-8 pb-32">
           <form id="sign-up-form" onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <input type="hidden" {...register('role')} />
@@ -321,6 +321,6 @@ export function UnifiedSignUpScreen({ role, onSignUp, onBack }: UnifiedSignUpScr
           <ChevronRight className="w-6 h-6" />
         </Button>
       </div>
-    </MobileContainer>
+    </div>
   );
 }

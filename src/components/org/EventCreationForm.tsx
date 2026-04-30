@@ -87,12 +87,12 @@ export function EventCreationForm({ onSubmit }: EventCreationFormProps) {
         {[1, 2, 3].map((s) => (
           <div key={s} className="flex items-center gap-2">
             <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all ${
-              s === step ? 'bg-purple-600 text-white shadow-lg' :
-              s < step ? 'bg-purple-500 text-white' : 'bg-gray-200 text-gray-500'
+              s === step ? 'bg-blue-600 text-white shadow-lg' :
+              s < step ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-500'
             }`}>
               {s < step ? <Check className="w-4 h-4" /> : s}
             </div>
-            {s < 3 && <div className={`w-12 h-1 rounded-full ${s < step ? 'bg-purple-400' : 'bg-gray-200'}`} />}
+            {s < 3 && <div className={`w-12 h-1 rounded-full ${s < step ? 'bg-blue-400' : 'bg-gray-200'}`} />}
           </div>
         ))}
       </div>
@@ -108,13 +108,13 @@ export function EventCreationForm({ onSubmit }: EventCreationFormProps) {
             <Label className="text-gray-700">Event Banner</Label>
             <div
               onClick={handleBannerUpload}
-              className={`border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all hover:border-purple-400 ${
+              className={`border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all hover:border-blue-400 ${
                 bannerPreview ? 'border-green-300 bg-green-50' : 'border-gray-300 bg-gray-50'
               }`}
             >
               {bannerPreview ? (
                 <div className="space-y-2">
-                  <div className="w-full h-32 bg-gradient-to-br from-purple-400 via-blue-500 to-green-400 rounded-2xl flex items-center justify-center">
+                  <div className="w-full h-32 bg-gradient-to-br from-blue-600 via-blue-700 to-green-600 rounded-2xl flex items-center justify-center">
                     <Image className="w-10 h-10 text-white/80" />
                   </div>
                   <p className="text-sm text-green-700 font-semibold">✓ Banner uploaded</p>
@@ -162,7 +162,7 @@ export function EventCreationForm({ onSubmit }: EventCreationFormProps) {
           </div>
 
           <Button type="button" onClick={nextStep}
-            className="w-full h-12 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 rounded-2xl"
+            className="w-full h-12 bg-gradient-to-r from-blue-600 via-blue-700 to-green-600 hover:from-blue-700 hover:to-green-700 rounded-2xl shadow-lg shadow-blue-900/20"
           >
             Next: Schedule & Venue <ChevronRight className="w-4 h-4 ml-2" />
           </Button>
@@ -220,7 +220,7 @@ export function EventCreationForm({ onSubmit }: EventCreationFormProps) {
               <ChevronLeft className="w-4 h-4 mr-1" /> Back
             </Button>
             <Button type="button" onClick={nextStep}
-              className="flex-1 h-12 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 rounded-2xl">
+              className="flex-1 h-12 bg-gradient-to-r from-blue-600 via-blue-700 to-green-600 hover:from-blue-700 hover:to-green-700 rounded-2xl shadow-lg shadow-blue-900/20">
               Next <ChevronRight className="w-4 h-4 ml-1" />
             </Button>
           </div>
@@ -255,14 +255,14 @@ export function EventCreationForm({ onSubmit }: EventCreationFormProps) {
             <div className="flex items-center justify-between">
               <Label className="text-gray-700">Sponsors</Label>
               <button type="button" onClick={addSponsor}
-                className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-700 font-semibold">
+                className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-semibold">
                 <Plus className="w-3 h-3" /> Add Sponsor
               </button>
             </div>
             {sponsors.map((sponsor, idx) => (
               <div key={idx} className="flex items-center gap-2 bg-gray-50 rounded-2xl p-3 border border-gray-200">
-                <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0">
-                  <Trophy className="w-5 h-5 text-purple-500" />
+                <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                  <Trophy className="w-5 h-5 text-blue-500" />
                 </div>
                 <div className="flex-1 space-y-1">
                   <Input value={sponsor.name}
@@ -288,7 +288,7 @@ export function EventCreationForm({ onSubmit }: EventCreationFormProps) {
               <ChevronLeft className="w-4 h-4 mr-1" /> Back
             </Button>
             <Button type="submit"
-              className="flex-1 h-12 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 rounded-2xl shadow-lg">
+              className="flex-1 h-12 bg-gradient-to-r from-blue-600 via-blue-700 to-green-600 hover:from-blue-700 hover:to-green-700 rounded-2xl shadow-lg shadow-blue-900/20">
               Publish Event
             </Button>
           </div>

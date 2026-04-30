@@ -32,7 +32,7 @@ export function LandingPage({ onGetStarted, onSignIn, onScoutMode }: LandingPage
   ];
 
   return (
-    <MobileContainer className="bg-slate-50 overflow-y-auto pb-8">
+    <div className="bg-slate-50 overflow-y-auto pb-8 h-full">
       {/* Hero Section */}
       <div className="relative pt-16 pb-14 px-6 flex flex-col items-center text-center bg-gradient-to-br from-blue-800 via-blue-700 to-teal-600 rounded-b-[40px] shadow-2xl overflow-hidden">
         {/* Subtle pattern overlay */}
@@ -112,6 +112,6 @@ export function LandingPage({ onGetStarted, onSignIn, onScoutMode }: LandingPage
           </Card>
         ))}
       </div>
-    </MobileContainer>
+    </div>
   );
 }

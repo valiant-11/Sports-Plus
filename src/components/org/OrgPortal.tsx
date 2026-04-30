@@ -55,8 +55,8 @@ export function OrgPortal({ onBack, orgName = 'Rico Tan Sports' }: OrgPortalProp
                     <Bell className="size-5 text-gray-600" />
                     <span className="absolute top-2 right-2 size-2 bg-red-500 rounded-full border-2 border-white"></span>
                   </Button>
-                  <Avatar className="h-10 w-10 border-2 border-purple-100">
-                    <AvatarFallback className="bg-purple-600 text-white font-bold">RT</AvatarFallback>
+                  <Avatar className="h-10 w-10 border-2 border-blue-100">
+                    <AvatarFallback className="bg-blue-600 text-white font-bold">RT</AvatarFallback>
                   </Avatar>
                 </div>
               </div>
@@ -65,17 +65,17 @@ export function OrgPortal({ onBack, orgName = 'Rico Tan Sports' }: OrgPortalProp
               <div className="grid grid-cols-2 gap-3 mb-6">
                 <Button 
                   onClick={() => setActiveTab('create-event')}
-                  className="h-24 rounded-3xl bg-gradient-to-br from-purple-600 to-purple-700 flex flex-col items-center justify-center gap-2 shadow-lg shadow-purple-200"
+                  className="h-24 rounded-3xl bg-gradient-to-br from-blue-600 via-blue-700 to-green-600 flex flex-col items-center justify-center gap-2 shadow-lg shadow-blue-900/20"
                 >
                   <Plus className="size-6 text-white" />
                   <span className="font-semibold">Create Event</span>
                 </Button>
                 <Button 
                   variant="outline"
-                  className="h-24 rounded-3xl border-2 border-purple-50 flex flex-col items-center justify-center gap-2 bg-white"
+                  className="h-24 rounded-3xl border-2 border-blue-50 flex flex-col items-center justify-center gap-2 bg-white"
                 >
-                  <Users className="size-6 text-purple-600" />
-                  <span className="font-semibold text-purple-700">Applicants</span>
+                  <Users className="size-6 text-blue-600" />
+                  <span className="font-semibold text-blue-700">Applicants</span>
                 </Button>
               </div>
             </div>
@@ -108,7 +108,7 @@ export function OrgPortal({ onBack, orgName = 'Rico Tan Sports' }: OrgPortalProp
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-xs font-bold text-purple-600">{i === 1 ? '18/24' : '12/16'}</p>
+                      <p className="text-xs font-bold text-blue-600">{i === 1 ? '18/24' : '12/16'}</p>
                       <p className="text-[9px] text-gray-400">Spots</p>
                     </div>
                   </div>
@@ -123,9 +123,9 @@ export function OrgPortal({ onBack, orgName = 'Rico Tan Sports' }: OrgPortalProp
       case 'settings':
         return (
           <div className="space-y-6 pb-24 bg-gray-50 min-h-screen">
-            <div className="bg-gradient-to-br from-purple-700 via-purple-600 to-blue-600 pt-8 pb-12 px-6 rounded-b-[40px] text-white shadow-xl relative overflow-hidden">
+            <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-green-600 pt-8 pb-12 px-6 rounded-b-[40px] text-white shadow-xl relative overflow-hidden">
               <h1 className="text-2xl font-bold">Org Settings</h1>
-              <p className="text-purple-100 text-sm">Manage profile and team members</p>
+              <p className="text-blue-100 text-sm">Manage profile and team members</p>
             </div>
             
             <div className="px-6 space-y-4 -mt-6 relative z-10">
@@ -133,7 +133,7 @@ export function OrgPortal({ onBack, orgName = 'Rico Tan Sports' }: OrgPortalProp
                 <CardContent className="p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <Avatar className="h-12 w-12 border border-gray-200">
-                      <AvatarFallback className="bg-purple-100 text-purple-700 font-bold">RT</AvatarFallback>
+                      <AvatarFallback className="bg-blue-100 text-blue-700 font-bold">RT</AvatarFallback>
                     </Avatar>
                     <div>
                       <h3 className="font-bold">{orgName}</h3>
@@ -165,7 +165,7 @@ export function OrgPortal({ onBack, orgName = 'Rico Tan Sports' }: OrgPortalProp
   };
 
   return (
-    <div className="h-screen w-full max-w-md mx-auto bg-gray-50 flex flex-col relative overflow-hidden">
+    <div className="h-full w-full bg-gray-50 flex flex-col relative overflow-hidden">
       <ScrollArea className="flex-1">
         {renderContent()}
       </ScrollArea>
@@ -173,7 +173,7 @@ export function OrgPortal({ onBack, orgName = 'Rico Tan Sports' }: OrgPortalProp
       {/* Full-Screen Explicit Create Event Overlay */}
       {activeTab === 'create-event' && (
         <div className="absolute inset-0 z-50 bg-gray-50 flex flex-col">
-          <div className="bg-gradient-to-br from-purple-700 via-purple-600 to-blue-600 pt-8 pb-12 px-6 rounded-b-[40px] text-white shadow-xl shrink-0 relative overflow-hidden">
+          <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-green-600 pt-8 pb-12 px-6 rounded-b-[40px] text-white shadow-xl shrink-0 relative overflow-hidden">
             <div className="flex items-center gap-3">
               <button 
                 onClick={() => setActiveTab('home')}
@@ -203,25 +203,25 @@ export function OrgPortal({ onBack, orgName = 'Rico Tan Sports' }: OrgPortalProp
           <div className="flex justify-around items-center h-20 px-6">
             <button 
               onClick={() => setActiveTab('home')}
-              className={`flex flex-col items-center gap-1.5 transition-all ${activeTab === 'home' ? 'text-purple-600' : 'text-gray-400'}`}
+              className={`flex flex-col items-center gap-1.5 transition-all ${activeTab === 'home' ? 'text-blue-600' : 'text-gray-400'}`}
             >
-              <LayoutDashboard className={`size-6 ${activeTab === 'home' ? 'fill-purple-50' : ''}`} />
+              <LayoutDashboard className={`size-6 ${activeTab === 'home' ? 'fill-blue-50' : ''}`} />
               <span className="text-[10px] font-bold">Home</span>
             </button>
             <button 
               onClick={() => setActiveTab('events')}
-              className={`flex flex-col items-center gap-1.5 transition-all ${activeTab === 'events' ? 'text-purple-600' : 'text-gray-400'}`}
+              className={`flex flex-col items-center gap-1.5 transition-all ${activeTab === 'events' ? 'text-blue-600' : 'text-gray-400'}`}
             >
-              <Calendar className={`size-6 ${activeTab === 'events' ? 'fill-purple-50' : ''}`} />
+              <Calendar className={`size-6 ${activeTab === 'events' ? 'fill-blue-50' : ''}`} />
               <span className="text-[10px] font-bold">Events</span>
             </button>
 
 
             <button 
               onClick={() => setActiveTab('settings')}
-              className={`flex flex-col items-center gap-1.5 transition-all ${activeTab === 'settings' ? 'text-purple-600' : 'text-gray-400'}`}
+              className={`flex flex-col items-center gap-1.5 transition-all ${activeTab === 'settings' ? 'text-blue-600' : 'text-gray-400'}`}
             >
-              <Settings className={`size-6 ${activeTab === 'settings' ? 'fill-purple-50' : ''}`} />
+              <Settings className={`size-6 ${activeTab === 'settings' ? 'fill-blue-50' : ''}`} />
               <span className="text-[10px] font-bold">Settings</span>
             </button>
           </div>

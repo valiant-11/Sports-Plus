@@ -42,7 +42,7 @@ export function OnboardingScreen({ onComplete }: OnboardingScreenProps) {
   const Icon = slide.icon;
 
   return (
-    <div className="h-screen w-full max-w-md mx-auto bg-white flex flex-col">
+    <div className="h-full w-full bg-white flex flex-col overflow-y-auto min-h-0">
       <div className={`flex-1 bg-gradient-to-br ${slide.color} flex items-center justify-center p-8 rounded-b-[3rem] transition-all duration-500`}>
         <div className="bg-white/10 backdrop-blur-sm rounded-3xl p-12 border border-white/20">
           <Icon className="w-32 h-32 text-white" strokeWidth={1.5} />

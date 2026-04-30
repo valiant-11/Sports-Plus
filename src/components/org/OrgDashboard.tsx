@@ -76,12 +76,12 @@ export function OrgDashboard({ onBack, orgName = 'Rico Tan Sports', isEmbedded =
     { name: 'Filled', value: totalApplicants },
     { name: 'Remaining', value: totalCapacity - totalApplicants },
   ];
-  const COLORS = ['#8b5cf6', '#e5e7eb']; // Purple and Gray
+  const COLORS = ['#2563eb', '#e5e7eb']; // Blue and Gray
 
   return (
-    <div className={`${isEmbedded ? 'flex-1' : 'h-[100dvh]'} w-full max-w-md mx-auto bg-gray-50 flex flex-col relative`}>
+    <div className={`${isEmbedded ? 'flex-1' : 'h-full'} w-full bg-gray-50 flex flex-col relative`}>
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-gradient-to-br from-purple-700 via-purple-600 to-blue-600 pt-8 pb-6 px-6 rounded-b-3xl shadow-lg shrink-0">
+      <div className="sticky top-0 z-40 bg-gradient-to-br from-blue-600 via-blue-700 to-green-600 pt-8 pb-6 px-6 rounded-b-3xl shadow-lg shrink-0">
         <div className="flex items-center gap-3 mb-4">
           <button onClick={onBack}
             className="bg-white/20 hover:bg-white/30 transition-colors p-2 rounded-lg text-white">
@@ -116,7 +116,7 @@ export function OrgDashboard({ onBack, orgName = 'Rico Tan Sports', isEmbedded =
         </div>
 
         {/* Analytics Performance Card - Mini */}
-        <div className="bg-white rounded-2xl p-4 shadow-xl flex items-center gap-4 border border-purple-100">
+        <div className="bg-white rounded-2xl p-4 shadow-xl flex items-center gap-4 border border-blue-100">
           <div className="relative size-20 flex-shrink-0">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -137,7 +137,7 @@ export function OrgDashboard({ onBack, orgName = 'Rico Tan Sports', isEmbedded =
               </PieChart>
             </ResponsiveContainer>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-xs font-bold text-purple-700">{fillRate}%</span>
+              <span className="text-xs font-bold text-blue-700">{fillRate}%</span>
             </div>
           </div>
           <div className="flex-1">
@@ -166,11 +166,11 @@ export function OrgDashboard({ onBack, orgName = 'Rico Tan Sports', isEmbedded =
         {/* Sticky Sub-Header */}
         <div className="sticky top-0 z-30 w-full bg-white/80 backdrop-blur-xl shadow-sm border-b border-gray-100 rounded-2xl p-4 flex items-center justify-between my-4">
           <div className="flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-purple-600" />
+            <Calendar className="w-5 h-5 text-blue-600" />
             <h2 className="font-bold text-gray-900">Live Events</h2>
           </div>
           {onCreateEvent && (
-            <Button onClick={onCreateEvent} size="sm" className="bg-gradient-to-br from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white rounded-xl h-8 text-xs px-3 shadow-md">
+            <Button onClick={onCreateEvent} size="sm" className="bg-gradient-to-br from-blue-600 to-green-600 hover:from-blue-700 hover:to-green-700 text-white rounded-xl h-8 text-xs px-3 shadow-md">
               <Plus className="w-4 h-4 mr-1" /> Create
             </Button>
           )}
@@ -199,7 +199,7 @@ export function OrgDashboard({ onBack, orgName = 'Rico Tan Sports', isEmbedded =
                   onClick={() => setSelectedEvent(event.id)}
                   className="w-full bg-white rounded-2xl p-4 border border-gray-100 shadow-sm text-left hover:shadow-md transition-shadow">
                   <div className="flex items-start gap-3">
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-100 to-blue-100 flex items-center justify-center text-2xl flex-shrink-0">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-100 to-green-100 flex items-center justify-center text-2xl flex-shrink-0">
                       {sportEmojis[event.sport] || '🎯'}
                     </div>
                     <div className="flex-1 min-w-0">
@@ -219,7 +219,7 @@ export function OrgDashboard({ onBack, orgName = 'Rico Tan Sports', isEmbedded =
                       {/* Applicant progress bar */}
                       <div className="flex items-center gap-2">
                         <div className="flex-1 bg-gray-200 rounded-full h-1.5 overflow-hidden">
-                          <div className="bg-gradient-to-r from-purple-500 to-blue-500 h-full rounded-full transition-all"
+                          <div className="bg-gradient-to-r from-blue-500 to-green-500 h-full rounded-full transition-all"
                             style={{ width: `${(event.applicants / event.maxPlayers) * 100}%` }} />
                         </div>
                         <span className="text-xs text-gray-600 font-medium flex-shrink-0">

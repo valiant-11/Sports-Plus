@@ -6,7 +6,7 @@ interface SplashScreenProps {
 
 export function SplashScreen({ onComplete }: SplashScreenProps) {
   return (
-    <div className="h-screen w-full max-w-md mx-auto bg-gradient-to-br from-[#1e40af] via-[#3b82f6] to-[#10b981] flex flex-col items-center justify-center p-6">
+    <div className="h-full w-full bg-gradient-to-br from-[#1e40af] via-[#3b82f6] to-[#10b981] flex flex-col items-center justify-center p-6">
       <div className="flex flex-col items-center gap-6 animate-fade-in">
         <div className="relative">
           <div className="absolute inset-0 bg-white/20 rounded-full blur-3xl"></div>

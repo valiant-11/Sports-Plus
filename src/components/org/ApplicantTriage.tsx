@@ -97,7 +97,7 @@ export function ApplicantTriage() {
         {(['all', 'pending', 'approved', 'rejected'] as const).map((f) => (
           <button key={f} onClick={() => setFilter(f)}
             className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-              filter === f ? 'bg-purple-600 text-white shadow-md' : 'bg-white text-gray-600 border border-gray-200'
+              filter === f ? 'bg-blue-600 text-white shadow-md' : 'bg-white text-gray-600 border border-gray-200'
             }`}>
             {f.charAt(0).toUpperCase() + f.slice(1)}
             {f !== 'all' && (
@@ -123,8 +123,8 @@ export function ApplicantTriage() {
               <div className="flex items-start gap-3">
                 {/* Avatar - clickable for drawer */}
                 <button onClick={() => openProfile(applicant)} className="flex-shrink-0">
-                  <Avatar className="w-12 h-12 border-2 border-purple-200">
-                    <AvatarFallback className="bg-gradient-to-br from-purple-400 to-blue-400 text-white font-bold text-sm">
+                  <Avatar className="w-12 h-12 border-2 border-blue-200">
+                    <AvatarFallback className="bg-gradient-to-br from-blue-400 to-green-400 text-white font-bold text-sm">
                       {applicant.initials}
                     </AvatarFallback>
                   </Avatar>
@@ -134,7 +134,7 @@ export function ApplicantTriage() {
                   {/* Name row */}
                   <div className="flex items-center gap-2 mb-1">
                     <button onClick={() => openProfile(applicant)}
-                      className="font-semibold text-gray-900 text-sm hover:text-purple-600 transition-colors truncate">
+                      className="font-semibold text-gray-900 text-sm hover:text-blue-600 transition-colors truncate">
                       {applicant.name}
                     </button>
                     {applicant.isVerified && <CheckCircle2 className="w-3.5 h-3.5 text-blue-600 flex-shrink-0" />}
@@ -185,9 +185,9 @@ export function ApplicantTriage() {
               </DrawerHeader>
               <ScrollArea className="px-4 pb-6">
                 {/* Profile Header */}
-                <div className="bg-gradient-to-br from-purple-600 to-blue-600 rounded-2xl p-5 text-center mb-4">
-                  <Avatar className="w-20 h-20 border-4 border-white shadow-xl mx-auto">
-                    <AvatarFallback className="bg-purple-200 text-purple-700 text-2xl font-bold">
+                <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-green-600 rounded-2xl p-5 text-center mb-4 shadow-lg shadow-blue-900/20">
+                  <Avatar className="w-20 h-20 border-4 border-white/50 shadow-xl mx-auto">
+                    <AvatarFallback className="bg-blue-200 text-blue-700 text-2xl font-bold">
                       {selectedApplicant.initials}
                     </AvatarFallback>
                   </Avatar>
@@ -203,10 +203,10 @@ export function ApplicantTriage() {
 
                 {/* Stats Grid */}
                 <div className="grid grid-cols-3 gap-3 mb-4">
-                  <div className="bg-purple-50 rounded-xl p-3 text-center">
-                    <Trophy className="w-5 h-5 text-purple-500 mx-auto mb-1" />
-                    <p className="text-lg font-bold text-purple-900">{selectedApplicant.totalPoints}</p>
-                    <p className="text-xs text-purple-600">Points</p>
+                  <div className="bg-blue-50 rounded-xl p-3 text-center">
+                    <Trophy className="w-5 h-5 text-blue-500 mx-auto mb-1" />
+                    <p className="text-lg font-bold text-blue-900">{selectedApplicant.totalPoints}</p>
+                    <p className="text-xs text-blue-600">Points</p>
                   </div>
                   <div className="bg-blue-50 rounded-xl p-3 text-center">
                     <Star className="w-5 h-5 text-blue-500 mx-auto mb-1" />
@@ -228,7 +228,7 @@ export function ApplicantTriage() {
                     </p>
                     <div className="flex flex-wrap gap-2">
                       {selectedApplicant.badges.map((badge, idx) => (
-                        <Badge key={idx} className="bg-purple-100 text-purple-700">{badge}</Badge>
+                        <Badge key={idx} className="bg-blue-100 text-blue-700">{badge}</Badge>
                       ))}
                     </div>
                   </div>

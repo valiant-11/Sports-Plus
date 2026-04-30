@@ -20,7 +20,7 @@ export function LoginScreen({ onLogin, onSignUp, onForgotPassword }: LoginScreen
   };
 
   return (
-    <div className="h-screen w-full max-w-md mx-auto bg-gray-50 flex flex-col">
+    <div className="h-full w-full bg-gray-50 flex flex-col overflow-y-auto min-h-0">
       <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-green-600 pt-12 pb-16 px-8 rounded-b-[3rem]">
         <div className="flex items-center gap-3 mb-2">
           <div className="bg-white rounded-2xl p-3">

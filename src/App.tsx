@@ -42,6 +42,7 @@ import { mockGames, mockUsers } from './data/mockData';
 import { Toaster, toast } from 'sonner';
 import { RoleSelectionScreen, UserRole } from './components/RoleSelectionScreen';
 import { UnifiedSignUpScreen } from './components/UnifiedSignUpScreen';
+import { MobileContainer } from './components/MobileContainer';
 
 type AppScreen = 
   | 'splash'
@@ -442,10 +443,7 @@ export function AppContent() {
   const hasActiveGame = !!(createdGameData || joinedGameData);
 
   return (
-    <div 
-      className="w-full max-w-md mx-auto min-h-screen shadow-2xl border-x border-gray-200 bg-background relative flex flex-col overflow-hidden"
-      style={{ maxWidth: '430px' }}
-    >
+    <MobileContainer>
       {/* Notification Bell Icon - positioned in header if authenticated */}
       {isAuthenticated && (
         <div className="fixed top-4 right-4 z-50">
@@ -837,7 +835,7 @@ export function AppContent() {
       )}
       
       <Toaster position="top-center" />
-      </div>
+      </MobileContainer>
     );
 }
 
