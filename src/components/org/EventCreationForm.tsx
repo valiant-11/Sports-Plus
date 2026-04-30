@@ -83,16 +83,16 @@ export function EventCreationForm({ onSubmit }: EventCreationFormProps) {
   return (
     <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-4 pb-12">
       {/* Step Indicator */}
-      <div className="flex items-center justify-between px-2 mb-2">
+      <div className="flex flex-row items-center justify-center max-w-[280px] mx-auto gap-1 mb-2">
         {[1, 2, 3].map((s) => (
           <div key={s} className="flex items-center gap-2">
             <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all ${
-              s === step ? 'bg-purple-600 text-white shadow-lg' :
-              s < step ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-500'
+              s === step ? 'bg-blue-600 text-white shadow-lg' :
+              s < step ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-500'
             }`}>
               {s < step ? <Check className="w-4 h-4" /> : s}
             </div>
-            {s < 3 && <div className={`w-12 h-1 rounded-full ${s < step ? 'bg-green-400' : 'bg-gray-200'}`} />}
+            {s < 3 && <div className={`w-12 h-1 rounded-full ${s < step ? 'bg-blue-400' : 'bg-gray-200'}`} />}
           </div>
         ))}
       </div>
@@ -108,13 +108,13 @@ export function EventCreationForm({ onSubmit }: EventCreationFormProps) {
             <Label className="text-gray-700">Event Banner</Label>
             <div
               onClick={handleBannerUpload}
-              className={`border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all hover:border-purple-400 ${
+              className={`border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition-all hover:border-blue-400 ${
                 bannerPreview ? 'border-green-300 bg-green-50' : 'border-gray-300 bg-gray-50'
               }`}
             >
               {bannerPreview ? (
                 <div className="space-y-2">
-                  <div className="w-full h-32 bg-gradient-to-br from-purple-400 via-blue-500 to-green-400 rounded-xl flex items-center justify-center">
+                  <div className="w-full h-32 bg-gradient-to-br from-blue-600 via-blue-700 to-green-600 rounded-2xl flex items-center justify-center">
                     <Image className="w-10 h-10 text-white/80" />
                   </div>
                   <p className="text-sm text-green-700 font-semibold">✓ Banner uploaded</p>
@@ -134,7 +134,7 @@ export function EventCreationForm({ onSubmit }: EventCreationFormProps) {
             <Input
               id="title" {...register('title', { required: true })}
               placeholder="e.g., Metro Manila Basketball Cup"
-              className="h-12 rounded-xl border-gray-200 bg-gray-50"
+              className="h-12 rounded-2xl border-gray-200 bg-gray-50"
             />
           </div>
 
@@ -143,14 +143,14 @@ export function EventCreationForm({ onSubmit }: EventCreationFormProps) {
             <Textarea
               id="description" {...register('description')}
               placeholder="Describe the event, rules, prizes..."
-              className="min-h-[80px] rounded-xl border-gray-200 bg-gray-50 resize-none"
+              className="min-h-[80px] rounded-2xl border-gray-200 bg-gray-50 resize-none"
             />
           </div>
 
           <div className="space-y-2">
             <Label className="text-gray-700">Sport Type *</Label>
-            <Select value={watchSport} onValueChange={(v) => setValue('sport', v)}>
-              <SelectTrigger className="h-12 rounded-xl border-gray-200 bg-gray-50">
+            <Select value={watchSport} onValueChange={(v: string) => setValue('sport', v)}>
+              <SelectTrigger className="h-12 rounded-2xl border-gray-200 bg-gray-50">
                 <SelectValue placeholder="Select sport" />
               </SelectTrigger>
               <SelectContent>
@@ -162,7 +162,7 @@ export function EventCreationForm({ onSubmit }: EventCreationFormProps) {
           </div>
 
           <Button type="button" onClick={nextStep}
-            className="w-full h-12 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 rounded-xl"
+            className="w-full h-12 bg-gradient-to-r from-blue-600 via-blue-700 to-green-600 hover:from-blue-700 hover:to-green-700 rounded-2xl shadow-lg shadow-blue-900/20"
           >
             Next: Schedule & Venue <ChevronRight className="w-4 h-4 ml-2" />
           </Button>
@@ -178,7 +178,7 @@ export function EventCreationForm({ onSubmit }: EventCreationFormProps) {
               <div className="relative">
                 <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input id="date" type="date" {...register('date', { required: true })}
-                  className="pl-10 h-12 rounded-xl border-gray-200 bg-gray-50" />
+                  className="pl-10 h-12 rounded-2xl border-gray-200 bg-gray-50" />
               </div>
             </div>
             <div className="space-y-2">
@@ -186,15 +186,15 @@ export function EventCreationForm({ onSubmit }: EventCreationFormProps) {
               <div className="relative">
                 <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <Input id="time" type="time" {...register('time', { required: true })}
-                  className="pl-10 h-12 rounded-xl border-gray-200 bg-gray-50" />
+                  className="pl-10 h-12 rounded-2xl border-gray-200 bg-gray-50" />
               </div>
             </div>
           </div>
 
           <div className="space-y-2">
             <Label className="text-gray-700">Venue *</Label>
-            <Select value={watch('venue')} onValueChange={(v) => setValue('venue', v)}>
-              <SelectTrigger className="h-12 rounded-xl border-gray-200 bg-gray-50">
+            <Select value={watch('venue')} onValueChange={(v: string) => setValue('venue', v)}>
+              <SelectTrigger className="h-12 rounded-2xl border-gray-200 bg-gray-50">
                 <SelectValue placeholder="Select venue" />
               </SelectTrigger>
               <SelectContent>
@@ -210,17 +210,17 @@ export function EventCreationForm({ onSubmit }: EventCreationFormProps) {
             <div className="relative">
               <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <Input id="maxPlayers" type="number" {...register('maxPlayers')}
-                className="pl-10 h-12 rounded-xl border-gray-200 bg-gray-50" />
+                className="pl-10 h-12 rounded-2xl border-gray-200 bg-gray-50" />
             </div>
           </div>
 
           <div className="flex gap-3">
             <Button type="button" onClick={prevStep} variant="outline"
-              className="flex-1 h-12 rounded-xl">
+              className="flex-1 h-12 rounded-2xl">
               <ChevronLeft className="w-4 h-4 mr-1" /> Back
             </Button>
             <Button type="button" onClick={nextStep}
-              className="flex-1 h-12 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 rounded-xl">
+              className="flex-1 h-12 bg-gradient-to-r from-blue-600 via-blue-700 to-green-600 hover:from-blue-700 hover:to-green-700 rounded-2xl shadow-lg shadow-blue-900/20">
               Next <ChevronRight className="w-4 h-4 ml-1" />
             </Button>
           </div>
@@ -234,12 +234,12 @@ export function EventCreationForm({ onSubmit }: EventCreationFormProps) {
             <div className="space-y-2">
               <Label htmlFor="minAge" className="text-gray-700">Min Age</Label>
               <Input id="minAge" type="number" {...register('minAge')}
-                className="h-12 rounded-xl border-gray-200 bg-gray-50" />
+                className="h-12 rounded-2xl border-gray-200 bg-gray-50" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="minRank" className="text-gray-700">Min Rank</Label>
               <Input id="minRank" type="number" {...register('minRank')}
-                className="h-12 rounded-xl border-gray-200 bg-gray-50" />
+                className="h-12 rounded-2xl border-gray-200 bg-gray-50" />
             </div>
           </div>
 
@@ -247,7 +247,7 @@ export function EventCreationForm({ onSubmit }: EventCreationFormProps) {
             <Label htmlFor="waiverText" className="text-gray-700">Waiver Text</Label>
             <Textarea id="waiverText" {...register('waiverText')}
               placeholder="Enter waiver/disclaimer text for participants..."
-              className="min-h-[60px] rounded-xl border-gray-200 bg-gray-50 resize-none" />
+              className="min-h-[60px] rounded-2xl border-gray-200 bg-gray-50 resize-none" />
           </div>
 
           {/* Sponsors */}
@@ -255,14 +255,14 @@ export function EventCreationForm({ onSubmit }: EventCreationFormProps) {
             <div className="flex items-center justify-between">
               <Label className="text-gray-700">Sponsors</Label>
               <button type="button" onClick={addSponsor}
-                className="flex items-center gap-1 text-xs text-purple-600 hover:text-purple-700 font-semibold">
+                className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-semibold">
                 <Plus className="w-3 h-3" /> Add Sponsor
               </button>
             </div>
             {sponsors.map((sponsor, idx) => (
-              <div key={idx} className="flex items-center gap-2 bg-gray-50 rounded-xl p-3 border border-gray-200">
-                <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0">
-                  <Trophy className="w-5 h-5 text-purple-500" />
+              <div key={idx} className="flex items-center gap-2 bg-gray-50 rounded-2xl p-3 border border-gray-200">
+                <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
+                  <Trophy className="w-5 h-5 text-blue-500" />
                 </div>
                 <div className="flex-1 space-y-1">
                   <Input value={sponsor.name}
@@ -284,11 +284,11 @@ export function EventCreationForm({ onSubmit }: EventCreationFormProps) {
 
           <div className="flex gap-3 pt-2">
             <Button type="button" onClick={prevStep} variant="outline"
-              className="flex-1 h-12 rounded-xl">
+              className="flex-1 h-12 rounded-2xl">
               <ChevronLeft className="w-4 h-4 mr-1" /> Back
             </Button>
             <Button type="submit"
-              className="flex-1 h-12 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 rounded-xl shadow-lg">
+              className="flex-1 h-12 bg-gradient-to-r from-blue-600 via-blue-700 to-green-600 hover:from-blue-700 hover:to-green-700 rounded-2xl shadow-lg shadow-blue-900/20">
               Publish Event
             </Button>
           </div>

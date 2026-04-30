@@ -218,6 +218,16 @@
 
   body {
     line-height: inherit;
+    height: 100%;
+  }
+
+  html, #root {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  [data-slot="scroll-area"] {
+    min-height: 0 !important;
   }
 
   hr {
