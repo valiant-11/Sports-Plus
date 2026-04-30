@@ -81,7 +81,7 @@ export function OrgDashboard({ onBack, orgName = 'Rico Tan Sports', isEmbedded =
   return (
     <div className={`${isEmbedded ? 'flex-1' : 'h-full'} w-full bg-gray-50 flex flex-col relative`}>
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-gradient-to-br from-blue-600 via-blue-700 to-green-600 pt-8 pb-6 px-6 rounded-b-3xl shadow-lg shrink-0">
+      <div className="sticky top-0 z-40 bg-gradient-to-br from-blue-600 via-blue-700 to-green-600 pt-16 pb-20 px-8 rounded-b-[3rem] shadow-2xl shadow-blue-900/30 shrink-0">
         <div className="flex items-center gap-3 mb-4">
           <button onClick={onBack}
             className="bg-white/20 hover:bg-white/30 transition-colors p-2 rounded-lg text-white">
