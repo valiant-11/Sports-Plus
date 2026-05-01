@@ -1,4 +1,4 @@
-import { Settings, CheckCircle2, Trophy, Award, Upload, Star, Camera, History, Edit2, X, Info, AlertCircle, HeartPulse, FileText, Calendar, MapPin, Clock } from 'lucide-react';
+import { Settings, CheckCircle2, Trophy, Award, Upload, Star, Camera, History, Edit2, X, Info, AlertCircle, HeartPulse, FileText, Calendar, MapPin, Clock, Crown } from 'lucide-react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { NotificationSystem } from './NotificationSystem';
 import { CertificateView } from './CertificateView';
 import { useAuth } from '../context/AuthContext';
+import { ProBadge } from './ui/ProBadge';
 import { mockGames, mockSchedules, mockTournaments, mockTeams, mockUsers } from '../data/mockData';
 
 interface ProfileScreenProps {
@@ -28,6 +29,7 @@ interface ProfileScreenProps {
     teamName: string | null;
     skillLevel?: 'Casual' | 'Novice' | 'Elite';
   };
+  onUpgrade?: () => void;
 }
 
 const badges = [
@@ -112,7 +114,7 @@ const getReliabilityTier = (score: number) => {
   return reliabilityTiers[reliabilityTiers.length - 1];
 };
 
-export function ProfileScreen({ onSettings, onViewAchievements, onViewHistory, onVerify, userData }: ProfileScreenProps) {
+export function ProfileScreen({ onSettings, onViewAchievements, onViewHistory, onVerify, userData, onUpgrade }: ProfileScreenProps) {
   const { currentUser } = useAuth();
   // Health info state
   const [showHealthDialog, setShowHealthDialog] = useState(false);
@@ -371,6 +373,7 @@ export function ProfileScreen({ onSettings, onViewAchievements, onViewHistory, o
           </div>
           <div className="flex items-center gap-2 mt-2">
             <h2 className="text-white text-xl">{user.name}</h2>
+            {currentUser?.subscriptionTier === 'PREMIUM' && <ProBadge size="md" />}
             {user.isVerified && (
               <CheckCircle2 className="w-5 h-5 text-white" />
             )}
@@ -401,6 +404,28 @@ export function ProfileScreen({ onSettings, onViewAchievements, onViewHistory, o
       </div>
 
       <div className="px-6 mt-6 space-y-4">
+        {/* Upgrade Banner for Free Users */}
+        {currentUser?.subscriptionTier === 'FREE' && (
+          <div className="bg-white border border-slate-100 shadow-md rounded-[2rem] p-5 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="size-12 rounded-2xl bg-emerald-50 flex items-center justify-center text-emerald-600">
+                <Crown className="size-6" />
+              </div>
+              <div>
+                <p className="text-slate-800 font-extrabold text-sm tracking-tight">Upgrade to Premium</p>
+                <p className="text-slate-500 text-xs font-medium">Unlock unlimited tournaments & more</p>
+              </div>
+            </div>
+            <Button 
+              onClick={onUpgrade}
+              style={{ backgroundColor: '#10b981' }}
+              className="hover:bg-[#059669] text-white rounded-full px-5 py-2 h-10 font-bold text-xs transition-colors shadow-sm"
+            >
+              Upgrade
+            </Button>
+          </div>
+        )}
+
         {/* Assigned Teams Section (Coach Only) */}
         {currentUser?.accountType === 'coach' && (
           <div className="bg-white rounded-2xl shadow-lg shadow-gray-200/50 p-4">

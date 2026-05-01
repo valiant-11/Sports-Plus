@@ -30,6 +30,8 @@ export interface User {
   mySchedules?: string[];
   specialization?: string;
   assignedTeams?: string[];
+  subscriptionTier: 'FREE' | 'PREMIUM';
+  subscriptionExpiry?: string;
 }
 
 export interface Venue {
@@ -152,6 +154,7 @@ export const mockUsers: User[] = [
     waiverTimestamp: '2026-03-15T08:30:00.000Z',
     certificates: [],
     mySchedules: ['s1', 's3', 's5'],
+    subscriptionTier: 'FREE',
   },
   {
     id: 'u2',
@@ -167,6 +170,7 @@ export const mockUsers: User[] = [
     waiverAccepted: true,
     certificates: [],
     mySchedules: ['s1', 's2', 's5'],
+    subscriptionTier: 'FREE',
   },
   {
     id: 'u3',
@@ -184,6 +188,8 @@ export const mockUsers: User[] = [
     mySchedules: ['s3'],
     specialization: 'Basketball',
     assignedTeams: ['t1'],
+    subscriptionTier: 'PREMIUM',
+    subscriptionExpiry: '2026-12-31',
   },
   {
     id: 'u4',
@@ -210,6 +216,7 @@ export const mockUsers: User[] = [
       },
     ],
     mySchedules: ['s1', 's4'],
+    subscriptionTier: 'FREE',
   },
   {
     id: 'u5',
@@ -225,6 +232,8 @@ export const mockUsers: User[] = [
     waiverAccepted: true,
     certificates: [],
     mySchedules: [],
+    subscriptionTier: 'PREMIUM',
+    subscriptionExpiry: '2027-01-15',
   },
   {
     id: 'u6',
@@ -240,6 +249,7 @@ export const mockUsers: User[] = [
     waiverAccepted: true,
     certificates: [],
     mySchedules: ['s1', 's3', 's5'],
+    subscriptionTier: 'FREE',
   },
   {
     id: 'u7',
@@ -255,6 +265,7 @@ export const mockUsers: User[] = [
     waiverAccepted: true,
     certificates: [],
     mySchedules: ['s1', 's3'],
+    subscriptionTier: 'FREE',
   },
   {
     id: 'u8',
@@ -268,7 +279,9 @@ export const mockUsers: User[] = [
     sport: 'Basketball',
     skillLevel: 'Intermediate',
     waiverAccepted: true,
-    certificates: [],    mySchedules: ['s1', 's3'],  },
+    certificates: [],    mySchedules: ['s1', 's3'],
+    subscriptionTier: 'FREE',
+  },
   {
     id: 'u9',
     name: 'Sofia Fernandez',
@@ -283,6 +296,8 @@ export const mockUsers: User[] = [
     waiverAccepted: true,
     certificates: [],
     mySchedules: ['s1', 's2', 's3', 's5'],
+    subscriptionTier: 'PREMIUM',
+    subscriptionExpiry: '2026-08-20',
   },
   {
     id: 'u10',
@@ -298,6 +313,7 @@ export const mockUsers: User[] = [
     waiverAccepted: true,
     certificates: [],
     mySchedules: ['s1', 's3', 's4'],
+    subscriptionTier: 'FREE',
   },
 ];
 
@@ -676,7 +692,7 @@ export const mockNotifications: Notification[] = [
 // CURRENT LOGGED IN USER
 // ============================================================================
 
-export const mockCurrentUser: User = mockUsers[4]; // Rico Tan (u5) - Organization [TEMP: change back to mockUsers[0] after testing]
+export const mockCurrentUser: User = mockUsers[0]; // Marco Reyes (u1) - Player
 
 // ============================================================================
 // HELPER FUNCTIONS

@@ -8,6 +8,7 @@ import { NotificationSystem } from './NotificationSystem';
 import { WaiverModal } from './WaiverModal';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'sonner';
+import { ProBadge } from './ui/ProBadge';
 
 interface Game {
   id: string;
@@ -18,7 +19,7 @@ interface Game {
   date: string;
   time: string;
   slots: { current: number; max: number };
-  organizer: { name: string; verified: boolean; rating: number };
+  organizer: { name: string; verified: boolean; rating: number; isPremium?: boolean };
   distance: string;
   description: string;
 }
@@ -33,7 +34,7 @@ const mockGames: Game[] = [
     date: 'Dec 16, 2025',
     time: '8:00 AM',
     slots: { current: 8, max: 10 },
-    organizer: { name: 'Alex Chen', verified: true, rating: 4.8 },
+    organizer: { name: 'Alex Chen', verified: true, rating: 4.8, isPremium: true },
     distance: '0.5 km',
     description: 'Friendly pickup game for casual players. No experience needed!',
   },
@@ -59,7 +60,7 @@ const mockGames: Game[] = [
     date: 'Dec 17, 2025',
     time: '6:30 PM',
     slots: { current: 12, max: 22 },
-    organizer: { name: 'Mike Johnson', verified: true, rating: 4.7 },
+    organizer: { name: 'Mike Johnson', verified: true, rating: 4.7, isPremium: true },
     distance: '2.8 km',
     description: 'Open match for everyone - casual, intermediate, and experienced players welcome!',
   },
@@ -98,7 +99,7 @@ const mockGames: Game[] = [
     date: 'Dec 20, 2025',
     time: '6:00 PM',
     slots: { current: 2, max: 4 },
-    organizer: { name: 'Lisa Brown', verified: true, rating: 5.0 },
+    organizer: { name: 'Lisa Brown', verified: true, rating: 5.0, isPremium: true },
     distance: '2.5 km',
     description: 'Elite-only tennis match. Bring your A-game!',
   },
@@ -455,11 +456,12 @@ export function HomeScreen({ onOpenChat, myGames = [], onManageGame, onJoinGame,
                     <div className="text-3xl">{sportIcons[game.sport]}</div>
                     <div>
                       <h3 className="text-gray-900 font-semibold">{game.title}</h3>
-                      <div className="flex items-center gap-2 mt-1">
+                      <div className="flex items-center gap-1.5 mt-1">
                         <span className="text-xs text-gray-600">{game.organizer.name}</span>
                         {game.organizer.verified && (
                           <CheckCircle2 className="w-4 h-4 text-blue-600" />
                         )}
+                        {game.organizer.isPremium && <ProBadge />}
                         <div className="flex items-center gap-1">
                           <Star className="w-3 h-3 fill-yellow-500 text-yellow-500" />
                           <span className="text-xs text-gray-600">{game.organizer.rating}</span>
@@ -558,6 +560,7 @@ export function HomeScreen({ onOpenChat, myGames = [], onManageGame, onJoinGame,
                 {selectedGame?.organizer.verified && (
                   <CheckCircle2 className="w-4 h-4 text-blue-600" />
                 )}
+                {selectedGame?.organizer.isPremium && <ProBadge />}
                 <div className="flex items-center gap-1">
                   <Star className="w-4 h-4 fill-yellow-500 text-yellow-500" />
                   <span className="text-gray-700 text-sm">{selectedGame?.organizer.rating}</span>

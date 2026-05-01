@@ -38,6 +38,7 @@ import { BottomNavigation } from './components/BottomNavigation';
 import { NotificationPanel } from './components/NotificationPanel';
 import { LandingPage } from './components/LandingPage';
 import { ScoutModeScreen } from './components/ScoutModeScreen';
+import { SubscriptionScreen } from './components/screens/SubscriptionScreen';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { mockGames, mockUsers } from './data/mockData';
 import { Toaster, toast } from 'sonner';
@@ -79,10 +80,11 @@ type AppScreen =
   | 'org-portal'
   | 'org-portal'
   | 'scout-mode'
-  | 'landing';
+  | 'landing'
+  | 'SubscriptionScreen';
 
 export function AppContent() {
-  const { currentUser, unreadCount, addNotification } = useAuth();
+  const { currentUser, unreadCount, addNotification, updateUser } = useAuth();
   const { isOrganization } = usePermissions();
   const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false);
   const [currentScreen, setCurrentScreen] = useState<AppScreen>('splash');
@@ -162,16 +164,9 @@ export function AppContent() {
     });
     setIsAuthenticated(true);
     
-    // Role-based redirection
-    if (role === 'organization') {
-      setCurrentScreen('org-portal');
-      setActiveTab('home');
-      toast.success('Organization registered successfully! Welcome to the portal.');
-    } else {
-      setCurrentScreen('home');
-      setActiveTab('home');
-      toast.success('Welcome to SportsPlus!');
-    }
+    // Intercept with Subscription Screen
+    setCurrentScreen('SubscriptionScreen');
+    setActiveTab('home');
   };
 
   const handleSignOut = () => {
@@ -493,6 +488,19 @@ export function AppContent() {
         />
       )}
 
+      {currentScreen === 'SubscriptionScreen' && (
+        <SubscriptionScreen 
+          onSelectTier={(tier) => {
+            updateUser({ subscriptionTier: tier });
+            if (currentUser?.role === 'organization') {
+              setCurrentScreen('org-portal');
+            } else {
+              setCurrentScreen('home');
+            }
+          }}
+        />
+      )}
+
 
       {currentScreen === 'onboarding' && (
         <OnboardingScreen onComplete={() => setCurrentScreen('login')} />
@@ -686,6 +694,7 @@ export function AppContent() {
           onViewHistory={() => setCurrentScreen('history')}
           userData={userData}
           onVerify={handleVerifyAccount}
+          onUpgrade={() => setCurrentScreen('SubscriptionScreen')}
         />
       )}
 
