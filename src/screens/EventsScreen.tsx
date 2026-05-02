@@ -251,7 +251,7 @@ export function EventsScreen({ onBack }: EventsScreenProps) {
   return (
     <div className="h-screen w-full max-w-md mx-auto bg-gray-50 flex flex-col pb-20">
       {/* Header */}
-      <div className="bg-gradient-to-br from-blue-600 via-purple-600 to-purple-700 pt-6 pb-6 px-6 rounded-b-3xl shadow-lg">
+      <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-green-600 rounded-b-[2rem] pt-8 pb-12 px-6">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-white text-2xl font-bold">Events</h1>
@@ -276,8 +276,8 @@ export function EventsScreen({ onBack }: EventsScreenProps) {
               key={sport}
               onClick={() => setSportFilter(sport)}
               className={`px-4 py-2 rounded-full font-medium whitespace-nowrap transition-colors ${sportFilter === sport
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-white text-gray-700 border border-gray-300 hover:border-gray-400'
+                ? 'bg-blue-600 text-white'
+                : 'bg-white text-gray-700 border border-gray-300 hover:border-gray-400'
                 }`}
             >
               {sport}
@@ -291,8 +291,8 @@ export function EventsScreen({ onBack }: EventsScreenProps) {
         <button
           onClick={() => setActiveTab('solo')}
           className={`flex-1 py-3 rounded-full font-bold transition-all ${activeTab === 'solo'
-              ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
-              : 'bg-white text-gray-700 border border-gray-300'
+            ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
+            : 'bg-white text-gray-700 border border-gray-300'
             }`}
         >
           Solo
@@ -300,8 +300,8 @@ export function EventsScreen({ onBack }: EventsScreenProps) {
         <button
           onClick={() => setActiveTab('team')}
           className={`flex-1 py-3 rounded-full font-bold transition-all ${activeTab === 'team'
-              ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
-              : 'bg-white text-gray-700 border border-gray-300'
+            ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
+            : 'bg-white text-gray-700 border border-gray-300'
             }`}
         >
           Team
@@ -372,8 +372,8 @@ export function EventsScreen({ onBack }: EventsScreenProps) {
                     onClick={() => handleRegisterSolo(event)}
                     disabled={event.status === 'full'}
                     className={`w-full rounded-xl py-2 font-semibold ${event.status === 'full'
-                        ? 'bg-gray-400 text-white cursor-not-allowed'
-                        : 'bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700'
+                      ? 'bg-gray-400 text-white cursor-not-allowed'
+                      : 'bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700'
                       }`}
                   >
                     {event.status === 'full' ? 'Full' : 'Register Solo'}
@@ -450,8 +450,8 @@ export function EventsScreen({ onBack }: EventsScreenProps) {
                     onClick={() => handleRegisterTeam(event)}
                     disabled={event.status === 'full'}
                     className={`w-full rounded-xl py-2 font-semibold ${event.status === 'full'
-                        ? 'bg-gray-400 text-white cursor-not-allowed'
-                        : 'bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700'
+                      ? 'bg-gray-400 text-white cursor-not-allowed'
+                      : 'bg-gradient-to-r from-green-500 to-emerald-600 text-white hover:from-green-600 hover:to-emerald-700'
                       }`}
                   >
                     {event.status === 'full' ? 'Full' : 'Register as Team'}

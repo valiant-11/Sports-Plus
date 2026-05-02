@@ -235,7 +235,7 @@ export function EventsScreen({ onBack, onJoinGame, joinedGames = [] }: EventsScr
   return (
     <div className="h-screen w-full max-w-md mx-auto bg-gray-50 flex flex-col pb-20">
       {/* Header */}
-      <div className="bg-gradient-to-br from-blue-600 via-purple-600 to-pink-600 pt-8 pb-6 px-6 rounded-b-[2rem]">
+      <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-green-600 rounded-b-[2rem] pt-8 pb-12 px-6">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-white text-2xl">Discover Events</h1>
