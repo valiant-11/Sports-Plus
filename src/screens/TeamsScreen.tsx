@@ -162,7 +162,7 @@ export function TeamsScreen({ onBack, onViewTeam }: TeamsScreenProps) {
   const topTeams = [...mockTeams].sort((a, b) => b.totalPoints - a.totalPoints);
 
   // Filter teams by sport
-  const filteredTeams = selectedSport === 'All' 
+  const filteredTeams = selectedSport === 'All'
     ? [...mockTeams].sort((a, b) => b.totalPoints - a.totalPoints)
     : [...mockTeams].filter(t => t.sport === selectedSport).sort((a, b) => b.totalPoints - a.totalPoints);
 
@@ -198,7 +198,7 @@ export function TeamsScreen({ onBack, onViewTeam }: TeamsScreenProps) {
     return (
       <div className="h-screen w-full max-w-md mx-auto bg-gray-50 flex flex-col pb-24">
         {/* Header with Tabs */}
-        <div className="bg-gradient-to-r from-blue-600 to-green-500 px-6 pt-8 pb-4 rounded-b-3xl shadow-lg">
+        <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-green-600 rounded-b-[2rem] pt-8 pb-12 px-6">
           <div className="flex items-center justify-between mb-4">
             {onBack && (
               <button onClick={onBack} className="text-white hover:bg-white/20 p-2 rounded-lg transition-colors">
@@ -210,7 +210,7 @@ export function TeamsScreen({ onBack, onViewTeam }: TeamsScreenProps) {
               <Plus className="w-5 h-5" />
             </button>
           </div>
-          
+
           {/* Tabs */}
           <div className="flex gap-2">
             <button onClick={() => setActiveTab('browse')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === 'browse' ? 'bg-white text-blue-600' : 'text-white/80 hover:bg-white/20'}`}>Browse</button>
@@ -218,11 +218,11 @@ export function TeamsScreen({ onBack, onViewTeam }: TeamsScreenProps) {
           </div>
         </div>
 
-        <ScrollArea className="flex-1">
+        <div className="flex-1 overflow-y-auto w-full">
           {activeTab === 'browse' && (
-            <div className="p-4 space-y-6 pb-24">
+            <div className="p-3 space-y-4 pb-20 w-full">
               {/* Top Teams Leaderboard */}
-              <div className="bg-white rounded-2xl shadow-lg shadow-gray-200/50 p-4">
+              <div className="bg-white rounded-2xl shadow-md p-3">
                 <div className="flex items-center gap-2 mb-4">
                   <Trophy className="w-5 h-5 text-yellow-500" />
                   <h2 className="text-gray-900 font-bold">Top Teams</h2>
@@ -263,11 +263,10 @@ export function TeamsScreen({ onBack, onViewTeam }: TeamsScreenProps) {
                   <button
                     key={sport}
                     onClick={() => setSelectedSport(sport)}
-                    className={`px-4 py-2 rounded-full whitespace-nowrap transition-all ${
-                      selectedSport === sport
-                        ? 'bg-blue-600 text-white shadow-lg'
-                        : 'bg-white text-gray-700 border border-gray-200'
-                    }`}
+                    className={`px-4 py-2 rounded-full whitespace-nowrap transition-all ${selectedSport === sport
+                      ? 'bg-blue-600 text-white shadow-lg'
+                      : 'bg-white text-gray-700 border border-gray-200'
+                      }`}
                   >
                     {sport}
                   </button>
@@ -275,35 +274,26 @@ export function TeamsScreen({ onBack, onViewTeam }: TeamsScreenProps) {
               </div>
 
               {/* Team Cards */}
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {filteredTeams.map(team => {
                   const captainName = getCaptainName(team.captainId);
                   return (
-                    <div key={team.id} className="bg-white rounded-2xl shadow-lg shadow-gray-200/50 p-4 hover:shadow-xl transition-shadow" onClick={() => onViewTeam?.(team.id)}>
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex-1">
-                          <h3 className="text-gray-900 font-bold text-lg">{team.name}</h3>
-                          <p className="text-sm text-gray-600 mt-1">Captain: {captainName}</p>
+                    <div key={team.id} className="bg-white rounded-2xl shadow-md p-3 hover:shadow-lg transition-shadow" onClick={() => onViewTeam?.(team.id)}>
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="size-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                          {team.name.charAt(0)}
                         </div>
-                        <Badge className={`${getSportColor(team.sport)} text-xs`}>{team.sport}</Badge>
-                      </div>
-                      <div className="grid grid-cols-3 gap-3 mb-4 py-3 border-y border-gray-100">
-                        <div className="text-center">
-                          <p className="text-lg font-bold text-gray-900">{team.members.length}</p>
-                          <p className="text-xs text-gray-600">Members</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-lg font-bold text-gray-900">{team.record.wins}-{team.record.losses}-{team.record.draws}</p>
-                          <p className="text-xs text-gray-600">Record</p>
-                        </div>
-                        <div className="text-center">
-                          <p className="text-lg font-bold text-blue-600">{team.totalPoints}</p>
-                          <p className="text-xs text-gray-600">Points</p>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-gray-900 font-semibold text-sm truncate">{team.name}</h4>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <Badge className={`${getSportColor(team.sport)} text-xs`}>{team.sport}</Badge>
+                            <span className="text-xs text-gray-500">{team.record.wins}W-{team.record.losses}L-{team.record.draws}D</span>
+                          </div>
+                          <p className="text-xs text-gray-500 mt-0.5">{captainName} • {team.members.length} members • {team.totalPoints} pts</p>
                         </div>
                       </div>
-                      <button onClick={(e) => { e.stopPropagation(); onViewTeam?.(team.id); }} className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2">
-                        View Team
-                        <ArrowRight className="w-4 h-4" />
+                      <button onClick={(e) => { e.stopPropagation(); onViewTeam?.(team.id); }} className="w-full py-1.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-2">
+                        View Team <ArrowRight className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   );
@@ -313,79 +303,76 @@ export function TeamsScreen({ onBack, onViewTeam }: TeamsScreenProps) {
           )}
 
           {activeTab === 'myteam' && currentTeam && (
-            <div className="pb-24">
+            <div className="pb-20">
               {/* Team Header */}
-              <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-green-600 pt-8 pb-8 px-6 rounded-b-[2rem] shadow-xl relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -mr-20 -mt-20" />
-                <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/10 rounded-full -ml-16 -mb-16" />
-                
+              <div className="bg-white rounded-3xl p-4 shadow-xl border border-slate-100 mx-4 -mt-10 relative z-10 overflow-hidden">
                 <div className="flex flex-col items-center text-center relative z-10">
-                  <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center text-4xl mb-3 shadow-xl border-2 border-white/30">
+                  <div className="w-20 h-20 bg-slate-50 rounded-2xl flex items-center justify-center text-4xl mb-3 shadow-sm border border-slate-100">
                     {currentTeam.logo}
                   </div>
-                  <h1 className="text-white text-2xl mb-1">{currentTeam.name}</h1>
+                  <h1 className="text-slate-900 text-2xl font-bold mb-1">{currentTeam.name}</h1>
                   <div className="flex items-center gap-2 mb-2">
-                    <Badge className="bg-white/20 text-white border-white/30 backdrop-blur-sm">{currentTeam.sport}</Badge>
-                    <Badge className="bg-white/20 text-white border-white/30 backdrop-blur-sm">{currentTeam.barangay}</Badge>
+                    <Badge className="bg-slate-50 text-slate-500 border-slate-200">{currentTeam.sport}</Badge>
+                    <Badge className="bg-slate-50 text-slate-500 border-slate-200">{currentTeam.barangay}</Badge>
                   </div>
-                  
+
                   {/* Team Level Badge */}
-                  <div className={`mt-2 px-4 py-1.5 rounded-full bg-gradient-to-r ${teamPerks[currentTeam.level - 1].color} shadow-lg`}>
+                  <div className="mt-2 px-4 py-1.5 rounded-full bg-blue-50 border border-blue-100 shadow-sm">
                     <div className="flex items-center gap-1.5">
-                      <Trophy className="size-4 text-white" />
-                      <span className="text-white">Level {currentTeam.level} - {teamPerks[currentTeam.level - 1].name}</span>
+                      <Trophy className="size-4 text-blue-700" />
+                      <span className="text-blue-700 font-medium">Level {currentTeam.level} - {teamPerks[currentTeam.level - 1].name}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* EXP Progress Bar */}
-                <div className="mt-6 bg-white/20 backdrop-blur-sm rounded-2xl p-4 border border-white/30">
+                <div className="mt-6 bg-slate-50 rounded-2xl p-3 border border-slate-100">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-white text-sm">Team EXP</span>
-                    <button onClick={() => setShowPerksModal(true)} className="text-white text-sm flex items-center gap-1 hover:underline">
+                    <span className="text-slate-600 text-sm font-medium">Team EXP</span>
+                    <button onClick={() => setShowPerksModal(true)} className="text-blue-600 hover:text-blue-700 text-sm flex items-center gap-1 hover:underline">
                       <Gift className="size-3" /> View Perks
                     </button>
                   </div>
-                  <div className="relative h-3 bg-white/20 rounded-full overflow-hidden">
-                    <div className="absolute inset-y-0 left-0 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full transition-all duration-500 shadow-lg" style={{ width: `${expPercentage}%` }}>
-                      <div className="absolute inset-0 bg-white/30 animate-pulse" />
+                  <div className="relative h-3 bg-slate-200 rounded-full overflow-hidden">
+                    <div className="absolute inset-y-0 left-0 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-500 shadow-sm" style={{ width: `${expPercentage}%` }}>
+                      <div className="absolute inset-0 bg-white/20 animate-pulse" />
                     </div>
                   </div>
                   <div className="flex items-center justify-between mt-1.5">
-                    <span className="text-white/80 text-xs">{currentTeam.exp} / {currentTeam.maxExp} EXP</span>
-                    <span className="text-white/80 text-xs">{Math.round(expPercentage)}%</span>
+                    <span className="text-slate-600 text-xs">{currentTeam.exp} / {currentTeam.maxExp} EXP</span>
+                    <span className="text-slate-600 text-xs">{Math.round(expPercentage)}%</span>
                   </div>
                 </div>
 
                 {/* Team Stats */}
                 <div className="grid grid-cols-3 gap-3 mt-4">
-                  <div className="text-center bg-white/10 backdrop-blur-sm rounded-xl p-2 border border-white/20">
-                    <p className="text-white">{currentTeam.members}/{currentTeam.maxMembers}</p>
-                    <p className="text-white/70 text-xs mt-0.5">Members</p>
+                  <div className="text-center bg-slate-50 rounded-xl p-2 border border-slate-100">
+                    <p className="text-slate-900 font-bold">{currentTeam.members}/{currentTeam.maxMembers}</p>
+                    <p className="text-slate-500 text-xs mt-0.5">Members</p>
                   </div>
-                  <div className="text-center bg-white/10 backdrop-blur-sm rounded-xl p-2 border border-white/20">
-                    <p className="text-white">{currentTeam.points}</p>
-                    <p className="text-white/70 text-xs mt-0.5">Points</p>
+                  <div className="text-center bg-slate-50 rounded-xl p-2 border border-slate-100">
+                    <p className="text-slate-900 font-bold">{currentTeam.points}</p>
+                    <p className="text-slate-500 text-xs mt-0.5">Points</p>
                   </div>
-                  <div className="text-center bg-white/10 backdrop-blur-sm rounded-xl p-2 border border-white/20">
-                    <p className="text-white">{currentTeam.avgRating.toFixed(1)}</p>
-                    <p className="text-white/70 text-xs mt-0.5">Rating</p>
+                  <div className="text-center bg-slate-50 rounded-xl p-2 border border-slate-100">
+                    <p className="text-slate-900 font-bold">{currentTeam.avgRating.toFixed(1)}</p>
+                    <p className="text-slate-500 text-xs mt-0.5">Rating</p>
                   </div>
                 </div>
               </div>
 
               {/* Team Challenges */}
-              <div className="px-6 mt-6">
+              <div className="px-4 mt-6">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="text-gray-900 font-semibold">Active Challenges</h3>
                   <Badge variant="outline" className="text-xs">{teamChallenges.filter(c => c.progress >= c.maxProgress).length}/{teamChallenges.length} Complete</Badge>
                 </div>
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {teamChallenges.map((challenge) => {
                     const progressPercent = (challenge.progress / challenge.maxProgress) * 100;
                     const isComplete = challenge.progress >= challenge.maxProgress;
                     return (
-                      <div key={challenge.id} className={`bg-white rounded-2xl p-4 shadow-lg border-2 transition-all ${isComplete ? 'border-green-300 bg-green-50' : 'border-gray-100 hover:shadow-xl'}`}>
+                      <div key={challenge.id} className={`bg-white rounded-2xl p-3 shadow-lg border-2 transition-all ${isComplete ? 'border-green-300 bg-green-50' : 'border-gray-100 hover:shadow-xl'}`}>
                         <div className="flex items-start gap-3">
                           <div className="text-2xl">{challenge.icon}</div>
                           <div className="flex-1">
@@ -428,7 +415,7 @@ export function TeamsScreen({ onBack, onViewTeam }: TeamsScreenProps) {
               </div>
 
               {/* Navigation Tabs */}
-              <div className="px-6 mt-6">
+              <div className="px-4 mt-6">
                 <Tabs value={selectedTeamTab} onValueChange={setSelectedTeamTab} className="w-full">
                   <TabsList className="w-full grid grid-cols-4 bg-white rounded-2xl shadow-lg h-12 p-1 gap-1">
                     <TabsTrigger value="overview" className="rounded-xl text-xs">
@@ -446,7 +433,7 @@ export function TeamsScreen({ onBack, onViewTeam }: TeamsScreenProps) {
                   </TabsList>
 
                   {/* Overview Tab */}
-                  <TabsContent value="overview" className="mt-4 space-y-4 pb-24">
+                  <TabsContent value="overview" className="mt-4 space-y-3 pb-20">
                     {/* Quick Actions */}
                     <div className="grid grid-cols-2 gap-3">
                       <Button onClick={handleInviteMember} className="bg-white rounded-2xl shadow-lg text-blue-600 hover:bg-gray-50 h-auto py-4 flex-col gap-2 border-2 border-gray-100">
@@ -746,7 +733,7 @@ export function TeamsScreen({ onBack, onViewTeam }: TeamsScreenProps) {
               )}
             </div>
           )}
-        </ScrollArea>
+        </div>
       </div>
     );
   }
@@ -754,7 +741,7 @@ export function TeamsScreen({ onBack, onViewTeam }: TeamsScreenProps) {
   // If no team, show team discovery/creation view
   return (
     <div className="h-screen w-full max-w-md mx-auto bg-gray-50 flex flex-col pb-20 overflow-y-auto">
-      <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-green-600 pt-8 pb-12 px-6">
+      <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-green-600 rounded-b-[2rem] pt-8 pb-12 px-6">
         <div className="flex items-center justify-between mb-3">
           <div>
             <h1 className="text-white text-2xl font-bold">Teams</h1>

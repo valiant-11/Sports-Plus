@@ -30,6 +30,8 @@ export interface User {
   mySchedules?: string[];
   specialization?: string;
   assignedTeams?: string[];
+  subscriptionTier: 'FREE' | 'PREMIUM';
+  subscriptionExpiry?: string;
 }
 
 export interface Venue {
@@ -54,6 +56,7 @@ export interface Game {
   venue: Venue;
   status: 'open' | 'full' | 'completed' | 'cancelled';
   isPWDWelcome: boolean;
+  isPromoted?: boolean;
 }
 
 export interface Sponsor {
@@ -152,6 +155,7 @@ export const mockUsers: User[] = [
     waiverTimestamp: '2026-03-15T08:30:00.000Z',
     certificates: [],
     mySchedules: ['s1', 's3', 's5'],
+    subscriptionTier: 'FREE',
   },
   {
     id: 'u2',
@@ -167,6 +171,7 @@ export const mockUsers: User[] = [
     waiverAccepted: true,
     certificates: [],
     mySchedules: ['s1', 's2', 's5'],
+    subscriptionTier: 'FREE',
   },
   {
     id: 'u3',
@@ -184,6 +189,8 @@ export const mockUsers: User[] = [
     mySchedules: ['s3'],
     specialization: 'Basketball',
     assignedTeams: ['t1'],
+    subscriptionTier: 'PREMIUM',
+    subscriptionExpiry: '2026-12-31',
   },
   {
     id: 'u4',
@@ -202,14 +209,15 @@ export const mockUsers: User[] = [
         id: 'cert1',
         gameId: 'g2',
         sport: 'Badminton',
-        gameName: 'Pasig Badminton Clash',
-        venue: 'Pasig Badminton Center',
+        gameName: 'Sicsican Badminton Clash',
+        venue: 'San Pedro Covered Court',
         date: '2026-04-03',
         pointsEarned: 80,
         playerName: 'Carla Dizon',
       },
     ],
     mySchedules: ['s1', 's4'],
+    subscriptionTier: 'FREE',
   },
   {
     id: 'u5',
@@ -225,6 +233,8 @@ export const mockUsers: User[] = [
     waiverAccepted: true,
     certificates: [],
     mySchedules: [],
+    subscriptionTier: 'FREE',
+    subscriptionExpiry: '2027-01-15',
   },
   {
     id: 'u6',
@@ -240,6 +250,7 @@ export const mockUsers: User[] = [
     waiverAccepted: true,
     certificates: [],
     mySchedules: ['s1', 's3', 's5'],
+    subscriptionTier: 'FREE',
   },
   {
     id: 'u7',
@@ -255,6 +266,7 @@ export const mockUsers: User[] = [
     waiverAccepted: true,
     certificates: [],
     mySchedules: ['s1', 's3'],
+    subscriptionTier: 'FREE',
   },
   {
     id: 'u8',
@@ -268,7 +280,9 @@ export const mockUsers: User[] = [
     sport: 'Basketball',
     skillLevel: 'Intermediate',
     waiverAccepted: true,
-    certificates: [],    mySchedules: ['s1', 's3'],  },
+    certificates: [],    mySchedules: ['s1', 's3'],
+    subscriptionTier: 'FREE',
+  },
   {
     id: 'u9',
     name: 'Sofia Fernandez',
@@ -283,6 +297,8 @@ export const mockUsers: User[] = [
     waiverAccepted: true,
     certificates: [],
     mySchedules: ['s1', 's2', 's3', 's5'],
+    subscriptionTier: 'PREMIUM',
+    subscriptionExpiry: '2026-08-20',
   },
   {
     id: 'u10',
@@ -298,6 +314,7 @@ export const mockUsers: User[] = [
     waiverAccepted: true,
     certificates: [],
     mySchedules: ['s1', 's3', 's4'],
+    subscriptionTier: 'FREE',
   },
 ];
 
@@ -308,7 +325,7 @@ export const mockUsers: User[] = [
 export const mockGames: Game[] = [
   {
     id: 'g1',
-    title: 'Taguig 3v3 Hoops',
+    title: 'Brgy. Bancao-Bancao 3v3 Hoops',
     sport: 'Basketball',
     hostId: 'u6',
     players: ['u6', 'u8', 'u1'],
@@ -318,18 +335,19 @@ export const mockGames: Game[] = [
     date: '2026-04-05',
     time: '4:00 PM',
     venue: {
-      name: 'Taguig Sports Complex',
-      address: 'Taguig City, Metro Manila',
+      name: 'Ramon V. Mitra Sports Complex',
+      address: 'Brgy. Tiniguiban, Puerto Princesa City',
       lat: 14.5243,
       lng: 121.0792,
       isPWDFriendly: true,
     },
     status: 'open',
     isPWDWelcome: true,
+    isPromoted: true,
   },
   {
     id: 'g2',
-    title: 'Pasig Badminton Clash',
+    title: 'Sicsican Badminton Clash',
     sport: 'Badminton',
     hostId: 'u2',
     players: ['u2', 'u9', 'u4', 'u1', 'u10'],
@@ -339,8 +357,8 @@ export const mockGames: Game[] = [
     date: '2026-04-05',
     time: '6:00 PM',
     venue: {
-      name: 'Pasig Badminton Center',
-      address: 'Pasig City, Metro Manila',
+      name: 'San Pedro Covered Court',
+      address: 'Brgy. Sicsican, Puerto Princesa City',
       lat: 14.5764,
       lng: 121.0851,
       isPWDFriendly: true,
@@ -350,7 +368,7 @@ export const mockGames: Game[] = [
   },
   {
     id: 'g3',
-    title: 'QC Sunday Football',
+    title: 'San Manuel Sunday Football',
     sport: 'Football',
     hostId: 'u3',
     players: ['u3', 'u1', 'u7', 'u10'],
@@ -360,8 +378,8 @@ export const mockGames: Game[] = [
     date: '2026-04-06',
     time: '7:00 AM',
     venue: {
-      name: 'Ateneo Oval',
-      address: 'Quezon City, Metro Manila',
+      name: 'Palawan State University (PalSU) Gymnasium',
+      address: 'Brgy. San Manuel, Puerto Princesa City',
       lat: 14.6396,
       lng: 121.0772,
       isPWDFriendly: false,
@@ -371,7 +389,7 @@ export const mockGames: Game[] = [
   },
   {
     id: 'g4',
-    title: 'Makati Volleyball Night',
+    title: 'Sta. Monica Volleyball Night',
     sport: 'Volleyball',
     hostId: 'u4',
     players: ['u4', 'u10'],
@@ -381,8 +399,8 @@ export const mockGames: Game[] = [
     date: '2026-04-06',
     time: '7:00 PM',
     venue: {
-      name: 'Makati Sports Center',
-      address: 'Makati City, Metro Manila',
+      name: 'Santa Monica High School (SMHS) Covered Gym',
+      address: 'Brgy. Sta. Monica, Puerto Princesa City',
       lat: 14.5539,
       lng: 121.0158,
       isPWDFriendly: true,
@@ -392,7 +410,7 @@ export const mockGames: Game[] = [
   },
   {
     id: 'g5',
-    title: 'Mandaluyong Tennis League',
+    title: 'San Pedro Tennis League',
     sport: 'Tennis',
     hostId: 'u1',
     players: ['u1', 'u9'],
@@ -402,8 +420,8 @@ export const mockGames: Game[] = [
     date: '2026-04-07',
     time: '5:30 PM',
     venue: {
-      name: 'Mandaluyong Tennis Club',
-      address: 'Mandaluyong City, Metro Manila',
+      name: 'Speaker Ramon V. Mitra Jr. Sports Complex',
+      address: 'Brgy. San Pedro, Puerto Princesa City',
       lat: 14.5729,
       lng: 121.0432,
       isPWDFriendly: false,
@@ -413,7 +431,7 @@ export const mockGames: Game[] = [
   },
   {
     id: 'g6',
-    title: 'Eastwood Basketball Pickup',
+    title: 'San Jose Basketball Pickup',
     sport: 'Basketball',
     hostId: 'u8',
     players: ['u8', 'u6', 'u1', 'u3'],
@@ -423,8 +441,8 @@ export const mockGames: Game[] = [
     date: '2026-04-08',
     time: '3:00 PM',
     venue: {
-      name: 'Eastwood Basketball Court',
-      address: 'Quezon City, Metro Manila',
+      name: 'San Jose Barangay Covered Court',
+      address: 'Brgy. San Jose, Puerto Princesa City',
       lat: 14.6359,
       lng: 121.0922,
       isPWDFriendly: true,
@@ -434,7 +452,7 @@ export const mockGames: Game[] = [
   },
   {
     id: 'g7',
-    title: 'BGC Futsal Tournament',
+    title: 'Bancao-Bancao Futsal Tournament',
     sport: 'Football',
     hostId: 'u5',
     players: ['u7', 'u1', 'u3'],
@@ -444,8 +462,8 @@ export const mockGames: Game[] = [
     date: '2026-04-09',
     time: '6:00 PM',
     venue: {
-      name: 'BGC Futsal Arena',
-      address: 'Bonifacio Global City, Metro Manila',
+      name: 'Bancao-Bancao Sports Center',
+      address: 'Brgy. Bancao-Bancao, Puerto Princesa City',
       lat: 14.5994,
       lng: 121.0437,
       isPWDFriendly: true,
@@ -455,7 +473,7 @@ export const mockGames: Game[] = [
   },
   {
     id: 'g8',
-    title: 'Las Piñas Badminton Open',
+    title: 'ESJ Badminton Open',
     sport: 'Badminton',
     hostId: 'u9',
     players: ['u9', 'u2', 'u1'],
@@ -465,8 +483,8 @@ export const mockGames: Game[] = [
     date: '2026-04-10',
     time: '7:00 PM',
     venue: {
-      name: 'Las Piñas Sports Complex',
-      address: 'Las Piñas City, Metro Manila',
+      name: 'ESJ Badminton Court',
+      address: 'Brgy. Bancao-Bancao, Puerto Princesa City',
       lat: 14.3544,
       lng: 120.9844,
       isPWDFriendly: true,
@@ -547,7 +565,7 @@ export const mockSchedules: Schedule[] = [
     sport: 'Basketball',
     dayOfWeek: 'Saturday',
     time: '3:00 PM',
-    venue: 'Taguig Sports Complex',
+    venue: 'Ramon V. Mitra Sports Complex',
     recurring: true,
     spotsLeft: 2,
     totalSpots: 10,
@@ -558,7 +576,7 @@ export const mockSchedules: Schedule[] = [
     sport: 'Badminton',
     dayOfWeek: 'Wednesday',
     time: '6:00 PM',
-    venue: 'Pasig Badminton Center',
+    venue: 'San Pedro Covered Court',
     recurring: true,
     spotsLeft: 5,
     totalSpots: 8,
@@ -569,7 +587,7 @@ export const mockSchedules: Schedule[] = [
     sport: 'Football',
     dayOfWeek: 'Sunday',
     time: '7:00 AM',
-    venue: 'Ateneo Oval',
+    venue: 'Palawan State University (PalSU) Gymnasium',
     recurring: true,
     spotsLeft: 3,
     totalSpots: 10,
@@ -580,7 +598,7 @@ export const mockSchedules: Schedule[] = [
     sport: 'Volleyball',
     dayOfWeek: 'Friday',
     time: '7:00 PM',
-    venue: 'Makati Sports Center',
+    venue: 'Santa Monica High School (SMHS) Covered Gym',
     recurring: true,
     spotsLeft: 8,
     totalSpots: 12,
@@ -591,7 +609,7 @@ export const mockSchedules: Schedule[] = [
     sport: 'Tennis',
     dayOfWeek: 'Tuesday',
     time: '5:30 PM',
-    venue: 'Mandaluyong Tennis Club',
+    venue: 'Speaker Ramon V. Mitra Jr. Sports Complex',
     recurring: true,
     spotsLeft: 1,
     totalSpots: 4,
@@ -606,12 +624,12 @@ export const mockSchedules: Schedule[] = [
 export const mockTournaments: Tournament[] = [
   {
     id: 'tr1',
-    name: 'Metro Manila Basketball Cup 2026',
+    name: 'Palawan Basketball Cup 2026',
     orgId: 'u5',
     sport: 'Basketball',
     bracketType: 'single-elimination',
     date: '2026-04-20',
-    venue: 'Rizal Memorial Coliseum',
+    venue: 'Puerto Princesa City Coliseum',
     participants: [
       { type: 'team', id: 't1' },
       { type: 'team', id: 't3' },
@@ -628,7 +646,7 @@ export const mockTournaments: Tournament[] = [
     sport: 'Badminton',
     bracketType: 'round-robin',
     date: '2026-04-27',
-    venue: 'Pasig Badminton Center',
+    venue: 'San Pedro Covered Court',
     participants: [
       { type: 'solo', id: 'u2' },
       { type: 'solo', id: 'u9' },
@@ -649,7 +667,7 @@ export const mockNotifications: Notification[] = [
   {
     id: 'n1',
     toUserId: 'u6',
-    message: 'Anika Santos (PWD) joined your game "Taguig 3v3 Hoops"',
+    message: 'Anika Santos (PWD) joined your game "Brgy. Bancao-Bancao 3v3 Hoops"',
     type: 'pwd_joined',
     timestamp: '2026-04-04T10:23:00',
     read: false,
@@ -657,7 +675,7 @@ export const mockNotifications: Notification[] = [
   {
     id: 'n2',
     toUserId: 'u1',
-    message: 'Your game "QC Sunday Football" starts in 1 hour',
+    message: 'Your game "San Manuel Sunday Football" starts in 1 hour',
     type: 'reminder',
     timestamp: '2026-04-06T06:00:00',
     read: false,
@@ -665,7 +683,7 @@ export const mockNotifications: Notification[] = [
   {
     id: 'n3',
     toUserId: 'u4',
-    message: 'You earned a Digital Certificate for "Pasig Badminton Clash"',
+    message: 'You earned a Digital Certificate for "Sicsican Badminton Clash"',
     type: 'certificate',
     timestamp: '2026-04-03T20:00:00',
     read: true,
@@ -676,7 +694,7 @@ export const mockNotifications: Notification[] = [
 // CURRENT LOGGED IN USER
 // ============================================================================
 
-export const mockCurrentUser: User = mockUsers[4]; // Rico Tan (u5) - Organization [TEMP: change back to mockUsers[0] after testing]
+export const mockCurrentUser: User = mockUsers[4]; // Rico Tan (u5) - Organization (FREE for testing limits)
 
 // ============================================================================
 // HELPER FUNCTIONS

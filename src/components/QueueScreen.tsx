@@ -10,6 +10,7 @@ import { MiniProfileCard } from './MiniProfileCard';
 import { ShareGameModal } from './ShareGameModal';
 import { useAuth } from '../context/AuthContext';
 import { CertificateView } from './CertificateView';
+import { ProBadge } from './ui/ProBadge';
 import { Certificate } from '../data/mockData';
 
 interface QueueScreenProps {
@@ -41,6 +42,7 @@ interface Player {
   ready?: boolean;
   rating?: number;
   skillLevel?: 'Casual' | 'Novice' | 'Elite';
+  subscriptionTier?: 'FREE' | 'PREMIUM';
 }
 
 interface TeamMember {
@@ -81,7 +83,7 @@ const mockTeamMembers: TeamMember[] = [
 ];
 
 export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onGameComplete, onRewardsEarned }: QueueScreenProps) {
-  const { addPoints } = useAuth();
+  const { addPoints, currentUser } = useAuth();
   const [selectedPlayer, setSelectedPlayer] = useState<any>(null);
   const [players, setPlayers] = useState<Player[]>([]);
   const [userReady, setUserReady] = useState(false);
@@ -223,6 +225,7 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
       ready: false,
       rating: 4.7,
       skillLevel: 'Elite',
+      subscriptionTier: currentUser?.subscriptionTier as 'FREE' | 'PREMIUM' || 'FREE',
     });
 
     for (let i = 1; i < gameData.maxPlayers; i++) {
@@ -238,6 +241,7 @@ export function QueueScreen({ onBack, onLeaveGame, gameData, isHost = false, onG
         ready: false,
         rating: randomRating,
         skillLevel: randomSkill,
+        subscriptionTier: Math.random() > 0.7 ? 'PREMIUM' : 'FREE',
       });
     }
 
