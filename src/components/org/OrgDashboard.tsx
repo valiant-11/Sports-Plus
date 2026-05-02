@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Building2, Calendar, Plus, Users, ArrowLeft, Activity, MapPin, Trophy, BarChart3, TrendingUp, Target } from 'lucide-react';
+import { Building2, Calendar, Plus, Users, ArrowLeft, Activity, MapPin, Trophy, BarChart3, TrendingUp, Target, Sparkles } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
 import { Badge } from '../ui/badge';
@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { EventCreationForm } from './EventCreationForm';
 import { ApplicantTriage } from './ApplicantTriage';
 import { useSubscriptionLimits } from '../../hooks/useSubscriptionLimits';
+import { PromoteDialog } from '../ui/PromoteDialog';
 
 interface OrgDashboardProps {
   onBack: () => void;
@@ -27,6 +28,7 @@ interface LiveEvent {
   applicants: number;
   maxPlayers: number;
   status: 'active' | 'upcoming' | 'completed';
+  isPromoted?: boolean;
 }
 
 const sportEmojis: Record<string, string> = {
@@ -38,7 +40,7 @@ export const mockLiveEvents: LiveEvent[] = [
   {
     id: 'le1', title: 'Metro Manila Basketball Cup 2026', sport: 'Basketball',
     date: 'Apr 20, 2026', venue: 'Rizal Memorial Coliseum',
-    applicants: 18, maxPlayers: 24, status: 'active',
+    applicants: 18, maxPlayers: 24, status: 'active', isPromoted: true,
   },
   {
     id: 'le2', title: 'Inclusive Badminton Open', sport: 'Badminton',
@@ -54,7 +56,15 @@ export const mockLiveEvents: LiveEvent[] = [
 
 export function OrgDashboard({ onBack, orgName = 'Rico Tan Sports', isEmbedded = false, onCreateEvent, onUpgrade }: OrgDashboardProps) {
   const [selectedEvent, setSelectedEvent] = useState<string | null>(null);
+  const [promoteDialogOpen, setPromoteDialogOpen] = useState(false);
+  const [promoteTargetName, setPromoteTargetName] = useState('');
   const { limit, count } = useSubscriptionLimits();
+
+  const handlePromoteClick = (e: React.MouseEvent, eventTitle: string) => {
+    e.stopPropagation();
+    setPromoteTargetName(eventTitle);
+    setPromoteDialogOpen(true);
+  };
 
   const getStatusColor = (status: LiveEvent['status']) => {
     switch (status) {
@@ -236,6 +246,25 @@ export function OrgDashboard({ onBack, orgName = 'Rico Tan Sports', isEmbedded =
                           {event.applicants}/{event.maxPlayers}
                         </span>
                       </div>
+                      {/* Promote button for non-completed, non-promoted events */}
+                      {event.status !== 'completed' && !event.isPromoted && (
+                        <button
+                          onClick={(e) => handlePromoteClick(e, event.title)}
+                          className="text-xs font-semibold text-[#f59e0b] border border-[#f59e0b] rounded-full px-3 py-1 hover:bg-amber-50 transition-colors flex items-center gap-1 mt-1"
+                        >
+                          <Sparkles className="w-3 h-3" />
+                          Promote
+                        </button>
+                      )}
+                      {event.isPromoted && (
+                        <span 
+                          style={{ background: 'linear-gradient(to right, #fbbf24, #ea580c)' }}
+                          className="text-white text-[9px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 uppercase tracking-wider shadow-sm mt-1"
+                        >
+                          <Sparkles className="w-2.5 h-2.5 text-white" />
+                          Promoted
+                        </span>
+                      )}
                     </div>
                   </div>
                 </button>
@@ -252,6 +281,12 @@ export function OrgDashboard({ onBack, orgName = 'Rico Tan Sports', isEmbedded =
           )}
         </div>
       </div>
+      {/* Promote Dialog */}
+      <PromoteDialog
+        isOpen={promoteDialogOpen}
+        onClose={() => setPromoteDialogOpen(false)}
+        tournamentName={promoteTargetName}
+      />
     </div>
   );
 }

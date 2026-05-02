@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MapPin, Filter, Calendar, Users, CheckCircle2, MessageCircle, Star } from 'lucide-react';
+import { MapPin, Filter, Calendar, Users, CheckCircle2, MessageCircle, Star, Sparkles } from 'lucide-react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
@@ -22,6 +22,7 @@ interface Game {
   organizer: { name: string; verified: boolean; rating: number; isPremium?: boolean };
   distance: string;
   description: string;
+  isPromoted?: boolean;
 }
 
 const mockGames: Game[] = [
@@ -37,6 +38,7 @@ const mockGames: Game[] = [
     organizer: { name: 'Alex Chen', verified: true, rating: 4.8, isPremium: true },
     distance: '0.5 km',
     description: 'Friendly pickup game for casual players. No experience needed!',
+    isPromoted: true,
   },
   {
     id: '2',
@@ -209,7 +211,11 @@ export function HomeScreen({ onOpenChat, myGames = [], onManageGame, onJoinGame,
     setPendingGameId(null);
   };
 
-  const sortedGames = [...mockGames];
+  const sortedGames = [...mockGames].sort((a, b) => {
+    if (a.isPromoted && !b.isPromoted) return -1;
+    if (!a.isPromoted && b.isPromoted) return 1;
+    return 0;
+  });
 
   let filteredGames = (selectedSport === 'all' 
     ? sortedGames 
@@ -449,89 +455,118 @@ export function HomeScreen({ onOpenChat, myGames = [], onManageGame, onJoinGame,
 
             {filteredGames.map((game) => {
               const isFull = game.slots.current >= game.slots.max;
-              return (
-              <div key={game.id} className="bg-white rounded-2xl shadow-lg shadow-gray-200/50 p-4 space-y-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-start gap-3">
-                    <div className="text-3xl">{sportIcons[game.sport]}</div>
-                    <div>
-                      <h3 className="text-gray-900 font-semibold">{game.title}</h3>
-                      <div className="flex items-center gap-1.5 mt-1">
-                        <span className="text-xs text-gray-600">{game.organizer.name}</span>
-                        {game.organizer.verified && (
-                          <CheckCircle2 className="w-4 h-4 text-blue-600" />
-                        )}
-                        {game.organizer.isPremium && <ProBadge />}
-                        <div className="flex items-center gap-1">
-                          <Star className="w-3 h-3 fill-yellow-500 text-yellow-500" />
-                          <span className="text-xs text-gray-600">{game.organizer.rating}</span>
+              const cardContent = (
+                <div className={`bg-white ${game.isPromoted ? 'rounded-[14px]' : 'rounded-2xl shadow-lg shadow-gray-200/50'} p-4 space-y-3`}>
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-start gap-3">
+                      <div className="text-3xl">{sportIcons[game.sport]}</div>
+                      <div>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="text-gray-900 font-semibold">{game.title}</h3>
+                          {game.isPromoted && (
+                            <span 
+                              style={{ background: 'linear-gradient(to right, #fbbf24, #ea580c)' }}
+                              className="text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 uppercase tracking-wider shadow-sm"
+                            >
+                              <Sparkles className="w-3 h-3 text-white" />
+                              Promoted
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <span className="text-xs text-gray-600">{game.organizer.name}</span>
+                          {game.organizer.verified && (
+                            <CheckCircle2 className="w-4 h-4 text-blue-600" />
+                          )}
+                          {game.organizer.isPremium && <ProBadge />}
+                          <div className="flex items-center gap-1">
+                            <Star className="w-3 h-3 fill-yellow-500 text-yellow-500" />
+                            <span className="text-xs text-gray-600">{game.organizer.rating}</span>
+                          </div>
                         </div>
                       </div>
                     </div>
+                    <div className="flex gap-2 items-start">
+                      {isFull && <Badge className="bg-red-600 text-white hover:bg-red-700">Full</Badge>}
+                      <Badge className={getSkillBadgeColor(game.skillLevels)}>
+                        {getSkillLabel(game.skillLevels)}
+                      </Badge>
+                    </div>
                   </div>
-                  <div className="flex gap-2 items-start">
-                    {isFull && <Badge className="bg-red-600 text-white hover:bg-red-700">Full</Badge>}
-                    <Badge className={getSkillBadgeColor(game.skillLevels)}>
-                      {getSkillLabel(game.skillLevels)}
-                    </Badge>
-                  </div>
-                </div>
 
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div className="flex items-center gap-2 text-gray-600">
-                    <MapPin className="w-4 h-4" />
-                    <span className="truncate">{game.location}</span>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <MapPin className="w-4 h-4" />
+                      <span className="truncate">{game.location}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-gray-600">
+                      <Calendar className="w-4 h-4" />
+                      <span>{game.date}</span>
+                    </div>
+                    <div className={`flex items-center gap-2 ${isFull ? 'text-gray-600' : 'text-green-600'}`}>
+                      <Users className="w-4 h-4" />
+                      <span className="font-semibold">{game.slots.current}/{game.slots.max} players</span>
+                    </div>
+                    <div className="text-gray-600">
+                      📍 {game.distance}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 text-gray-600">
-                    <Calendar className="w-4 h-4" />
-                    <span>{game.date}</span>
-                  </div>
-                  <div className={`flex items-center gap-2 ${isFull ? 'text-gray-600' : 'text-green-600'}`}>
-                    <Users className="w-4 h-4" />
-                    <span className="font-semibold">{game.slots.current}/{game.slots.max} players</span>
-                  </div>
-                  <div className="text-gray-600">
-                    📍 {game.distance}
-                  </div>
-                </div>
 
-                <div className="flex gap-2">
-                  <Button 
-                    onClick={() => {
-                      if (!isFull) {
-                        toggleJoinGame(game.id);
-                      }
-                    }}
-                    disabled={isFull && !joinedGames.includes(game.id)}
-                    className={`flex-1 rounded-xl transition-all font-semibold ${
-                      joinedGames.includes(game.id)
-                        ? 'bg-red-600 hover:bg-red-700 text-white'
-                        : isFull
-                        ? 'bg-gray-400 text-white cursor-not-allowed opacity-50'
-                        : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white'
-                    }`}
-                  >
-                    {joinedGames.includes(game.id) ? 'Leave Game' : isFull ? 'Game Full' : 'Join Game'}
-                  </Button>
-                  {joinedGames.includes(game.id) && (
+                  <div className="flex gap-2">
+                    <Button 
+                      onClick={() => {
+                        if (!isFull) {
+                          toggleJoinGame(game.id);
+                        }
+                      }}
+                      disabled={isFull && !joinedGames.includes(game.id)}
+                      className={`flex-1 rounded-xl transition-all font-semibold ${
+                        joinedGames.includes(game.id)
+                          ? 'bg-red-600 hover:bg-red-700 text-white'
+                          : isFull
+                          ? 'bg-gray-400 text-white cursor-not-allowed opacity-50'
+                          : 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white'
+                      }`}
+                    >
+                      {joinedGames.includes(game.id) ? 'Leave Game' : isFull ? 'Game Full' : 'Join Game'}
+                    </Button>
+                    {joinedGames.includes(game.id) && (
+                      <Button
+                        onClick={() => onOpenChat?.(game.id, game.organizer.name)}
+                        variant="outline"
+                        className="rounded-xl"
+                      >
+                        <MessageCircle className="w-5 h-5" />
+                      </Button>
+                    )}
                     <Button
-                      onClick={() => onOpenChat?.(game.id, game.organizer.name)}
+                      onClick={() => setSelectedGame(game)}
                       variant="outline"
                       className="rounded-xl"
                     >
-                      <MessageCircle className="w-5 h-5" />
+                      Details
                     </Button>
-                  )}
-                  <Button
-                    onClick={() => setSelectedGame(game)}
-                    variant="outline"
-                    className="rounded-xl"
-                  >
-                    Details
-                  </Button>
+                  </div>
                 </div>
-              </div>
-            );
+              );
+
+              return game.isPromoted ? (
+                <div 
+                  key={game.id} 
+                  style={{ 
+                    background: 'linear-gradient(to right, #fbbf24, #f59e0b, #ea580c)',
+                    padding: '2px',
+                    borderRadius: '1rem',
+                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                  }}
+                >
+                  {cardContent}
+                </div>
+              ) : (
+                <div key={game.id}>
+                  {cardContent}
+                </div>
+              );
             })}
           </>
         )}

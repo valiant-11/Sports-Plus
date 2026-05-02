@@ -56,6 +56,7 @@ export interface Game {
   venue: Venue;
   status: 'open' | 'full' | 'completed' | 'cancelled';
   isPWDWelcome: boolean;
+  isPromoted?: boolean;
 }
 
 export interface Sponsor {
@@ -342,6 +343,7 @@ export const mockGames: Game[] = [
     },
     status: 'open',
     isPWDWelcome: true,
+    isPromoted: true,
   },
   {
     id: 'g2',

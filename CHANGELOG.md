@@ -8,6 +8,11 @@ All notable changes to this project will be documented in this file.
 - **Monetization (Module 1):** Added global `ProBadge` UI component with adaptive sizing (`sm` and `md`) for feeds and profiles.
 - **Monetization (Module 2):** Implemented `useSubscriptionLimits` mock hook to restrict 'FREE' tier organizers to 1 active tournament.
 - **Monetization (Module 2):** Built mobile-responsive `LimitReachedDialog` to intercept tournament creation and drive premium upgrades.
+- **Monetization (Module 3):** Implemented "Pay-to-Promote" feature allowing Organizers to boost tournament visibility via a one-off fee.
+- **Monetization (Module 3):** Created `PromoteDialog` checkout flow with responsive mobile styling.
+- **Monetization (Module 3):** Updated `HomeScreen` discovery feed logic to pin `isPromoted` tournaments to the top of the list.
+- **UI/UX:** Added premium visual flair (gold gradient borders and tags) to promoted event cards.
+- **Data:** Updated `mockData.ts` `Game` interface to support the `isPromoted` boolean.
 - **Data:** Updated `mockData.ts` to include `subscriptionTier` ('FREE' | 'PREMIUM') across User and Organization interfaces.
 
 ### Changed
